@@ -126,9 +126,14 @@ void keymapping::process(QByteArray inputReport)
     if (__symPressed && !retKey.empty())
     {
         int symKey = -1;
+	int symMod = 0;
         /* SYM Modifications */
         switch (retKey.at(0).first)
         {
+        case KEY_M:
+            symKey = retKey.at(0).first;
+            symMod = FORCE_RIGHTALT;
+            break;
         case KEY_UP:
             symKey = KEY_PAGEUP; break;
         case KEY_DOWN:
@@ -146,7 +151,7 @@ void keymapping::process(QByteArray inputReport)
         if (symKey > 0)
         {
             retKey.clear();
-            retKey.append(qMakePair(symKey, 0));
+            retKey.append(qMakePair(symKey, symMod));
         }
     }
 
