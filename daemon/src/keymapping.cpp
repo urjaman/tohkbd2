@@ -66,8 +66,8 @@ void keymapping::process(QByteArray inputReport)
         else if (key == 0xAA) { retKey.append(qMakePair(KEY_8, 0)); }
         else if (key == 0xAB) { retKey.append(qMakePair(KEY_9, 0)); }
         else if (key == 0xAC) { retKey.append(qMakePair(KEY_0, 0)); }
-        else if (key == 0xAD) { retKey.append(qMakePair(KEY_MINUS, 0)); }
-        else if (key == 0xAE) { retKey.append(qMakePair(KEY_EQUAL, 0)); }
+        else if (key == 0xAD) { retKey.append(qMakePair(KEY_SLASH, 0)); }
+        else if (key == 0xAE) { retKey.append(qMakePair(KEY_0, FORCE_SHIFT)); }
         else if (key == 0xAF) { retKey.append(qMakePair(KEY_BACKSPACE, 0)); }
 
         else if (key == 0xB1) { retKey.append(qMakePair(KEY_DELETE, 0)); }
@@ -83,7 +83,7 @@ void keymapping::process(QByteArray inputReport)
         else if (key == 0xBB) { retKey.append(qMakePair(KEY_I, 0)); }
         else if (key == 0xBC) { retKey.append(qMakePair(KEY_O, 0)); }
         else if (key == 0xBD) { retKey.append(qMakePair(KEY_P, 0)); }
-        else if (key == 0xBE) { retKey.append(qMakePair(KEY_KPPLUS, 0)); }
+        else if (key == 0xBE) { retKey.append(qMakePair(KEY_LEFTBRACE, 0)); }
 
         else if (key == 0xC1) { retKey.append(qMakePair(KEY_LEFT, 0)); }
         else if (key == 0xC3) { retKey.append(qMakePair(KEY_RIGHT, 0)); }
@@ -109,7 +109,7 @@ void keymapping::process(QByteArray inputReport)
         else if (key == 0xD8) { retKey.append(qMakePair(KEY_B, 0)); }
         else if (key == 0xD9) { retKey.append(qMakePair(KEY_N, 0)); }
         else if (key == 0xDA) { retKey.append(qMakePair(KEY_M, 0)); }
-        else if (key == 0xDB) { retKey.append(qMakePair(KEY_SLASH, FORCE_SHIFT)); /* ? */ }
+        else if (key == 0xDB) { retKey.append(qMakePair(KEY_MINUS, FORCE_SHIFT)); /* ? */ }
         else if (key == 0xDC) { retKey.append(qMakePair(KEY_1, FORCE_SHIFT)); /* ! */ }
         else if (key == 0xDD) { retKey.append(qMakePair(KEY_COMMA, 0)); }
         else if (key == 0xDE) { retKey.append(qMakePair(KEY_DOT, 0)); }
@@ -117,7 +117,7 @@ void keymapping::process(QByteArray inputReport)
         else if (key == 0x40) { retKey.append(qMakePair(KEY_SPACE, 0)); }
         else if (key == 0x80) { retKey.append(qMakePair(KEY_SPACE, 0)); }
         else if (key == 0xE9) { retKey.append(qMakePair(KEY_SPACE, 0)); }
-        else if (key == 0xEC) { retKey.append(qMakePair(KEY_2, FORCE_SHIFT)); /* @ */ }
+        else if (key == 0xEC) { retKey.append(qMakePair(KEY_2, FORCE_RIGHTALT)); /* @ */ }
         else if (key == 0xEF) { retKey.append(qMakePair(KEY_ENTER, 0)); }
 
         if (retKey.size() > 1) { retKey.removeFirst(); }
@@ -130,26 +130,92 @@ void keymapping::process(QByteArray inputReport)
         /* SYM Modifications */
         switch (retKey.at(0).first)
         {
+	/* Restore F-keys for later code. */
+	case KEY_0:
+	    if (retKey.at(0).second == FORCE_SHIFT) {
+                retKey.clear();
+	        retKey.append(qMakePair(KEY_EQUAL, 0));
+	    } else {
+                retKey.clear();
+	        retKey.append(qMakePair(KEY_0, 0));
+	    }
+	    break;
+	case KEY_SLASH:
+            retKey.clear();
+            retKey.append(qMakePair(KEY_MINUS, 0));
+	    break;
+
+
+	case KEY_Q:
+	    /* tilde */
+	    break;
+        case KEY_W:
+	    symKey = KEY_3; symMod = FORCE_SHIFT; break;
+	case KEY_E:
+	    symKey = KEY_4; symMod = FORCE_RIGHTALT; break;
+	case KEY_R:
+	    symKey = KEY_5; symMod = FORCE_SHIFT; break;
+	case KEY_T:
+	    /* circumflex */
+	    break;
+	case KEY_Y:
+	    symKey = KEY_6; symMod = FORCE_SHIFT; break;
+	case KEY_U:
+	    symKey = KEY_BACKSLASH; symMod = FORCE_SHIFT; break;
+	case KEY_I:
+	    symKey = KEY_7; symMod = FORCE_RIGHTALT; break;
+	case KEY_O:
+	    symKey = KEY_0; symMod = FORCE_RIGHTALT; break;
+	case KEY_P:
+	    symKey = KEY_SLASH; symMod = FORCE_SHIFT; break;
+	case KEY_LEFTBRACE:
+	    symKey = KEY_MINUS; break;
+	case KEY_A:
+	    symKey = KEY_COMMA; symMod = FORCE_SHIFT; break;
+	case KEY_S:
+	    symKey = KEY_BACKSLASH; break;
+	case KEY_D:
+	    symKey = KEY_3; symMod = FORCE_RIGHTALT; break;
+	/* skipped F, Q, need to check if these are dead and stuff ` ´ .. */
+	case KEY_K:
+	    symKey = KEY_8; symMod = FORCE_RIGHTALT; break;
+	case KEY_L:
+	    symKey = KEY_9; symMod = FORCE_RIGHTALT; break;
+	case KEY_SEMICOLON:
+	    symKey = KEY_8; symMod = FORCE_SHIFT; break;
+	case KEY_APOSTROPHE:
+	    symKey = KEY_9; symMod = FORCE_SHIFT; break;
+	case KEY_Z:
+	    symKey = KEY_DOT; symMod = FORCE_SHIFT; break;
+	case KEY_X:
+	    symKey = KEY_2; symMod = FORCE_SHIFT; break;
+	case KEY_C:
+	    symKey = KEY_E; symMod = FORCE_RIGHTALT; break;
+        case KEY_V:
+            symKey = KEY_7; symMod = FORCE_SHIFT; break;
+	case KEY_B:
+	    symKey = KEY_102ND; symMod = FORCE_RIGHTALT; break;
+        case KEY_N:
+            symKey = KEY_MINUS; symMod = FORCE_RIGHTALT; break;
         case KEY_M:
-            symKey = retKey.at(0).first;
-            symMod = FORCE_RIGHTALT;
-            break;
+            symKey = retKey.at(0).first; symMod = FORCE_RIGHTALT; break;
+	case KEY_COMMA:
+	    symKey = KEY_102ND; break;
+	case KEY_DOT:
+	    symKey = KEY_102ND; symMod = FORCE_SHIFT; break;
         case KEY_UP:
             symKey = KEY_PAGEUP; break;
         case KEY_DOWN:
             symKey = KEY_PAGEDOWN; break;
         case KEY_TAB:
             symKey = KEY_ESC; break;
-        case KEY_V:
-            symKey = KEY_SLASH; break;
-        case KEY_N:
-            symKey = KEY_BACKSLASH; break;
         default:
             break;
         }
 
         if (symKey > 0)
         {
+	    __symPressed = false;
             retKey.clear();
             retKey.append(qMakePair(symKey, symMod));
         }
