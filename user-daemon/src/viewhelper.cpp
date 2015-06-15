@@ -67,7 +67,8 @@ void ViewHelper::showWindow()
     {
         if ((pr.at(i).contains("invoker") && pr.at(i).contains("silica")) ||
                 pr.at(i).contains("jolla-") ||
-                pr.at(i).contains("sailfish-"))
+                pr.at(i).contains("sailfish-") ||
+                (pr.at(i).contains("invoker") && pr.at(i).contains("fingerterm")))
         {
             cmd << pr.at(i);
         }
@@ -119,7 +120,7 @@ void ViewHelper::showWindow()
 
         for (int m = 0 ; m < exec.count() ; m++)
         {
-            if (app.exec().contains(exec.at(m)) && app.isValid() && !app.hidden() && !app.noDisplay())
+            if (app.exec().contains(exec.at(m)) && app.isValid() && !app.hidden() && !app.noDisplay() && desktops.at(i).contains(exec.at(m).split("/").last()))
             {
                 map.clear();
                 map.insert("name", app.name());
@@ -134,6 +135,8 @@ void ViewHelper::showWindow()
                 appsDesktopFiles.append(desktops.at(i));
 
                 printf("tohkbd2-user: %s\n", qPrintable(desktops.at(i)));
+
+                exec.removeAt(m);
 
                 if (apps.count() > 15)
                     break;

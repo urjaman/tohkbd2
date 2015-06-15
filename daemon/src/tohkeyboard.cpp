@@ -295,7 +295,10 @@ bool Tohkbd::checkKeypadPresence()
         tca8424->reset();
         QThread::msleep(150);
     }
-    if (!tca8424->testComms())
+
+    tca8424driver::PresenceResult res = tca8424->testComms();
+
+    if (res == tca8424driver::DetectFail)
     {
         printf("keypad not present, turning power off\n");
         setVddState(false);
@@ -314,11 +317,23 @@ bool Tohkbd::checkKeypadPresence()
         if (!keypadIsPresent)
         {
             keyboardConnectedNotification(true);
-            tca8424->setLeds((keymap->ctrlPressed ? LED_SYMLOCK_ON : LED_SYMLOCK_OFF) | ((capsLockSeq == 3) ? LED_CAPSLOCK_ON : LED_CAPSLOCK_OFF));
-            presenceTimer->start();
+            tca8424->setLeds((keymap->symPressed ? LED_SYMLOCK_ON : LED_SYMLOCK_OFF)
+                             | ((keymap->ctrlPressed || keymap->altPressed) ? LED_EXTRA_ON : LED_EXTRA_OFF)
+                             | ((capsLockSeq == 3) ? LED_CAPSLOCK_ON : LED_CAPSLOCK_OFF));
+            checkDoWeNeedBacklight();
             checkEEPROM();
         }
+        else if (res == tca8424driver::NoKeyPressedSinceReset)
+        {
+            /* Keyboard power interrupt shortly? refresh leds just in case */
+            tca8424->setLeds((keymap->symPressed ? LED_SYMLOCK_ON : LED_SYMLOCK_OFF)
+                             | ((keymap->ctrlPressed || keymap->altPressed) ? LED_EXTRA_ON : LED_EXTRA_OFF)
+                             | ((capsLockSeq == 3) ? LED_CAPSLOCK_ON : LED_CAPSLOCK_OFF));
+            if (forceBacklightOn)
+                tca8424->setLeds(LED_BACKLIGHT_ON);
+        }
 
+        presenceTimer->start();
         keypadIsPresent = true;
     }
 
@@ -348,11 +363,26 @@ void Tohkbd::handleGpioInterrupt()
     }
     else
     {
-	QByteArray r = tca8424->readInputReport();
-        if (!r.isEmpty()) {
-            presenceTimer->start();
-            keymap->process(r);
-        }
+        int retries = 3;
+        do
+        {
+            QByteArray r = tca8424->readInputReport();
+            if (!r.isEmpty())
+            {
+                presenceTimer->start();
+                keymap->process(r);
+                retries = -1;
+            }
+            else
+            {
+                printf("Something wrong here now, retrying... %d\n", retries);
+                retries--;
+                QThread::msleep(100);
+            }
+        } while (retries > 0);
+
+        if (retries == 0) /* Did we loose keyboard */
+            checkKeypadPresence();
     }
 }
 
@@ -533,7 +563,7 @@ void Tohkbd::handleCtrlChanged()
 
     if (keymap->stickyCtrlEnabled)
     {
-        tca8424->setLeds(keymap->ctrlPressed ? LED_SYMLOCK_ON : LED_SYMLOCK_OFF); /* TODO: Fix correct led when such is in HW */
+        tca8424->setLeds(keymap->ctrlPressed ? LED_EXTRA_ON : LED_EXTRA_OFF);
     }
 }
 
@@ -548,7 +578,7 @@ void Tohkbd::handleAltChanged()
 
     if (keymap->stickyAltEnabled)
     {
-        tca8424->setLeds(keymap->altPressed ? LED_SYMLOCK_ON : LED_SYMLOCK_OFF); /* TODO: Fix correct led when such is in HW */
+        tca8424->setLeds(keymap->altPressed ? LED_EXTRA_ON : LED_EXTRA_OFF);
     }
 
     if (!keymap->altPressed && taskSwitcherVisible)
@@ -569,7 +599,7 @@ void Tohkbd::handleSymChanged()
 
     if (keymap->stickySymEnabled)
     {
-        tca8424->setLeds(keymap->symPressed ? LED_SYMLOCK_ON : LED_SYMLOCK_OFF); /* TODO: Fix correct led when such is in HW */
+        tca8424->setLeds(keymap->symPressed ? LED_SYMLOCK_ON : LED_SYMLOCK_OFF);
     }
 }
 
