@@ -42,7 +42,7 @@ signals:
 public slots:
 
 private:
-    bool keyIsPressed;
+    int pressedCode;
 
     bool ctrlDown;
     bool ctrlWasHeldDown;

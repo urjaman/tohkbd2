@@ -10,7 +10,7 @@ keymapping::keymapping(QObject *parent) :
     ctrlPressed = false;
     altPressed = false;
     symPressed = false;
-    keyIsPressed = false;
+    pressedCode = -1;
 
     stickyCtrlEnabled = false;
     stickyAltEnabled = false;
@@ -86,7 +86,7 @@ void keymapping::process(QByteArray inputReport)
         ctrlWasHeldDown = true;
     }
 
-    if (stickyCtrlEnabled && ctrlDown && ir.isEmpty() && !keyIsPressed)
+    if (stickyCtrlEnabled && ctrlDown && ir.isEmpty() && pressedCode<0)
     {
         releaseStickyModifiers();
         ctrlPressed = !ctrlPressed;
@@ -104,7 +104,7 @@ void keymapping::process(QByteArray inputReport)
         altWasHeldDown = true;
     }
 
-    if (stickyAltEnabled && altDown && ir.isEmpty() && !keyIsPressed)
+    if (stickyAltEnabled && altDown && ir.isEmpty() && pressedCode<0)
     {
         releaseStickyModifiers();
         altPressed = !altPressed;
@@ -122,7 +122,7 @@ void keymapping::process(QByteArray inputReport)
         symWasHeldDown = true;
     }
 
-    if (stickySymEnabled && symDown && ir.isEmpty() && !keyIsPressed)
+    if (stickySymEnabled && symDown && ir.isEmpty() && pressedCode<0)
     {
         releaseStickyModifiers();
         symPressed = !symPressed;
@@ -158,58 +158,71 @@ void keymapping::process(QByteArray inputReport)
             emit symChanged();
         }
 
-        if (keyIsPressed)
+        if (pressedCode>=0)
         {
-            keyIsPressed = false;
-            _prevInputReport.clear();
+            pressedCode = -1;
             emit keyReleased();
         }
+        _prevInputReport = ir;
         return;
     }
 
-    /* Check the last usage code in report */
-
-    if (!symPressed) /* Without SYM modifier */
+    int code=-1;
+    /* Check for new code in report. */
+    for(int i=ir.length()-1;i>=0;--i)
     {
-        int i = 0;
-        while (lut_plain[i])
-        {
-            if (ir.at(ir.length()-1) == lut_plain[i])
-            {
-                 retKey.append(qMakePair(lut_plain[i+1], lut_plain[i+2]));
-                 break;
-            }
-            i += 3;
+        if (!_prevInputReport.contains(ir.at(i))) {
+		code = ir.at(i);
+                break;
         }
     }
-    else if (symPressed) /* With SYM modifier */
+    if (code>=0)
     {
-        int i = 0;
-        while (lut_sym[i])
+        if (!symPressed) /* Without SYM modifier */
         {
-            if (ir.at(ir.length()-1) == lut_sym[i])
+            int i = 0;
+            while (lut_plain[i])
             {
-                 retKey.append(qMakePair(lut_sym[i+1], lut_sym[i+2]));
-                 break;
+                if (code == lut_plain[i])
+                {
+                    retKey.append(qMakePair(lut_plain[i+1], lut_plain[i+2]));
+                    break;
+                }
+                i += 3;
             }
-            i += 3;
+        }
+        else if (symPressed) /* With SYM modifier */
+        {
+            int i = 0;
+            while (lut_sym[i])
+            {
+                if (code == lut_sym[i])
+                {
+                    retKey.append(qMakePair(lut_sym[i+1], lut_sym[i+2]));
+                    break;
+                }
+                i += 3;
+            }
         }
     }
 
     /* If key is changed on the fly without break... emit released */
-    if (keyIsPressed && !_prevInputReport.isEmpty() && !retKey.empty())
+    if (pressedCode>=0)
     {
-        if (_prevInputReport != ir)
+        if ( (!ir.contains(pressedCode)) || ((code>=0) && (pressedCode != code)) )
+        {
+            pressedCode = -1;
             emit keyReleased();
+        }
         if (_prevInputReport == ir)
             return;
     }
 
-    /* Key, not a modifier, is pressed */
-    keyIsPressed = !retKey.empty();
-
-    if (keyIsPressed)
+    if (!retKey.empty())
+    {
+        pressedCode = code;
         emit keyPressed(retKey);
+    }
 
     _prevInputReport = ir;
 }
