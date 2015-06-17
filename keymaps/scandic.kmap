@@ -1,0 +1,196 @@
+# us.map
+keymaps 0-2,4-6,8-9,12
+alt_is_meta
+strings as usual
+
+keycode   1 = Escape
+keycode   2 = one              exclam           exclamdown
+        altgr shift keycode   2 = onesuperior
+keycode   3 = two              quotedbl         at
+        control keycode   3 = nul
+        control altgr keycode   3 = nul
+        altgr shift keycode   3 = twosuperior
+keycode   4 = three            numbersign       sterling
+        control keycode   4 = Escape
+        altgr shift keycode   4 = threesuperior
+keycode   5 = four             currency         dollar
+        control keycode   5 = Control_backslash
+        altgr shift keycode   5 = cent
+keycode   6 = five             percent          U+20AC
+        control keycode   6 = Control_bracketright
+        altgr shift keycode   6 = masculine
+keycode   7 = six              ampersand        yen
+        control keycode   7 = Control_asciicircum
+        altgr shift keycode   7 = ordfeminine
+keycode   8 = seven            slash            braceleft
+        control keycode   8 = Control_underscore
+        altgr shift keycode   8 = plusminus
+keycode   9 = eight            parenleft        bracketleft
+        control keycode   9 = Delete
+        control altgr keycode   9 = Escape
+        altgr shift keycode   9 = less
+        altgr control keycode   9 = guillemotleft
+keycode  10 = nine             parenright       bracketright
+        control altgr keycode  10 = Control_bracketright
+        altgr shift keycode  10 = greater
+        altgr control keycode  10 = guillemotright
+keycode  11 = zero             equal            braceright
+        altgr shift keycode  11 = degree
+keycode  12 = plus             question         backslash
+        control keycode  12 = Control_underscore
+        control altgr keycode  12 = Control_backslash
+        altgr shift keycode  12 = questiondown
+keycode  13 = acute       grave       cedilla
+        alt     keycode  13 = Meta_equal
+        alt shift keycode  13 = Meta_grave
+        altgr shift keycode  13 = cedilla
+keycode  14 = Delete
+keycode  15 = Tab
+        shift   keycode  15 = Meta_Tab
+
+keycode  26 = +aring           +Aring           U+0153
+        control keycode  26 = Escape
+        alt     keycode  26 = Meta_bracketleft
+        altgr shift keycode  26 = U+0152
+keycode  27 = diaeresis   asciicircum  asciitilde
+        control keycode  27 = Control_bracketright
+        control shift keycode  27 = Control_asciicircum
+        alt keycode  27 = bracketright
+        alt shift keycode  27 = asciicircum
+        alt altgr keycode  27 = asciitilde
+        altgr shift keycode  27 = asciicircum
+keycode  28 = Return
+        alt     keycode  28 = Meta_Control_m
+keycode  29 = Control
+keycode  39 = +odiaeresis      +Odiaeresis      +oslash
+        alt     keycode  39 = Meta_semicolon
+        altgr shift keycode  39 = +Oslash
+keycode  40 = +adiaeresis      +Adiaeresis      +ae
+        alt     keycode  40 = Meta_apostrophe
+        altgr shift keycode  40 = +AE
+keycode  41 = section          onehalf          onequarter
+        control keycode  41 = nul
+        alt     keycode  41 = Meta_grave
+        altgr shift keycode  41 = threequarters
+keycode  42 = Shift
+keycode  43 = apostrophe       asterisk         asciicircum
+        control keycode  43 = Control_backslash
+        altgr shift keycode  43 = tilde
+keycode  51 = comma            semicolon        cedilla
+        altgr shift keycode  51 = cedilla
+keycode  52 = period           colon            periodcentered
+        altgr shift keycode  52 = notsign
+keycode  53 = minus            underscore       hyphen
+        control keycode  53 = Control_underscore
+        control shift keycode  53 = Control_underscore
+        control alt shift keycode  53 = Meta_Control_underscore
+        altgr shift keycode  53 = macron
+keycode  54 = Shift
+keycode  56 = Alt
+keycode  57 = space            space            space
+        control keycode  57 = nul
+        altgr shift keycode  57 = nobreakspace
+keycode  58 = Caps_Lock
+
+keycode  86 = less             greater          bar
+        alt altgr keycode  86 = Meta_bar
+        altgr shift keycode  86 = brokenbar
+keycode  97 = Control
+
+# qwerty-layout
+keycode  16 = q
+keycode  17 = w
+keycode  18 = e
+keycode  19 = r
+keycode  20 = t
+keycode  21 = y
+keycode  22 = u
+keycode  23 = i
+keycode  24 = o
+keycode  25 = p
+#
+keycode  30 = a
+keycode  31 = s
+keycode  32 = d
+keycode  33 = f
+keycode  34 = g
+keycode  35 = h
+keycode  36 = j
+keycode  37 = k
+keycode  38 = l
+#
+keycode  44 = z
+keycode  45 = x
+keycode  46 = c
+keycode  47 = v
+keycode  48 = b
+keycode  49 = n
+keycode  50 = m
+#
+
+altgr keycode  18 = U+20AC
+altgr shift keycode  18 = cent
+altgr keycode  19 = registered
+altgr shift keycode  19 = VoidSymbol
+altgr keycode  20 = +thorn
+altgr shift keycode  20 = +THORN
+altgr keycode  23 = U+0131
+altgr shift keycode  23 = bar
+altgr keycode  25 = paragraph
+altgr shift keycode  25 = VoidSymbol
+altgr keycode  30 = U+0259
+altgr shift keycode  30 = U+018F
+altgr keycode  31 = U+0161
+altgr shift keycode  31 = U+0160
+altgr control keycode  31 = ssharp
+altgr keycode  32 = +eth
+altgr shift keycode  32 = +ETH
+altgr keycode  34 = U+014B
+altgr shift keycode  34 = U+014A
+altgr keycode  37 = U+0138
+altgr shift keycode  37 = VoidSymbol
+altgr keycode  44 = U+017E
+altgr shift keycode  44 = U+017D
+altgr keycode  45 = multiply
+shift altgr keycode  45 = division
+altgr keycode  46 = copyright
+altgr shift keycode  46 = cent
+altgr keycode  48 = ssharp
+altgr shift keycode  48 = VoidSymbol
+altgr keycode  49 = +ntilde
+altgr shift keycode  49 = +Ntilde
+altgr keycode  50 = mu
+altgr shift keycode  50 = VoidSymbol
+
+
+keycode 100 = AltGr
+
+
+# The four cursor keys
+#
+keycode 103 = Up
+keycode 105 = Left
+keycode 106 = Right
+keycode 108 = Down
+
+#
+# The six edit keys
+#
+keycode 110 = Insert
+keycode 102 = Home		# Find
+keycode 104 = PageUp		# Prior
+keycode 111 = Remove
+keycode 107 = End		# Select
+keycode 109 = PageDown		# Next
+
+plain keycode 114 = VolumeDown 
+plain keycode 115 = VolumeUp 
+plain keycode 163 = MediaNext 
+plain keycode 164 = MediaTogglePlayPause 
+plain keycode 165 = MediaPrevious 
+plain keycode 166 = MediaStop 
+plain keycode 168 = AudioRewind 
+plain keycode 200 = MediaPlay 
+plain keycode 201 = MediaPause 
+plain keycode 208 = AudioForward 
+plain keycode 256 = ToggleCallHangup 
