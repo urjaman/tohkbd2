@@ -87,9 +87,9 @@ static const int lut_sym[] =
     0xAD, KEY_F11, 0,
     0xAE, KEY_F12, 0,
     //0xAF, KEY_BACKSPACE, 0,
-    //0xB1, KEY_DELETE, 0,
-    0xB2, KEY_PAGEUP, 0,
-    //0xB3, KEY_INSERT, 0,
+    0xB1, KEY_TOH_SELFIE, 0,            /* Del */
+    0xB2, KEY_PAGEUP, 0,                /* Up */
+    0xB3, KEY_TOH_SCREENSHOT, 0,        /* Ins */
     0xB4, KEY_RIGHTBRACE, FORCE_RIGHTALT, /* Q ~ */
     0xB5, KEY_3, FORCE_SHIFT, /* W # */
     0xB6, KEY_4, FORCE_RIGHTALT, /* E $ */
@@ -101,8 +101,8 @@ static const int lut_sym[] =
     0xBC, KEY_0, FORCE_RIGHTALT, /* O } */
     0xBD, KEY_SLASH, FORCE_SHIFT, /* P _ */
     0xBE, KEY_MINUS, 0, /* Å + */
-    //0xC1, KEY_LEFT, 0,
-    //0xC3, KEY_RIGHT, 0,
+    0xC1, KEY_VOLUMEDOWN, 0,            /* Left */
+    0xC3, KEY_VOLUMEUP, 0,              /* Right*/
     0xC4, KEY_COMMA, FORCE_SHIFT, /* A ; */
     0xC5, KEY_BACKSLASH, 0, /* S ' */
     0xC6, KEY_3, FORCE_RIGHTALT, /* D £ */
@@ -115,7 +115,7 @@ static const int lut_sym[] =
     0xCD, KEY_8, FORCE_SHIFT, /* Ö ( */
     0xCE, KEY_9, FORCE_SHIFT, /* Ä ) */
     //0xD1, KEY_HOME, 0,
-    0xD2, KEY_PAGEDOWN, 0,
+    0xD2, KEY_PAGEDOWN, 0,              /* Down */
     //0xD3, KEY_END, 0,
     0xD4, KEY_DOT, FORCE_SHIFT, /* Z : */
     0xD5, KEY_2, FORCE_SHIFT, /* X " */
@@ -135,3 +135,4 @@ static const int lut_sym[] =
 };
 
 #endif // KEYMAPPING_LUT_H
+

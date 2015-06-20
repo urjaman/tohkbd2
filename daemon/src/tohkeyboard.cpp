@@ -44,8 +44,10 @@ Tohkbd::Tohkbd(QObject *parent) :
     keyRepeat = false;
     slideEventEmitted = false;
     taskSwitcherVisible = false;
+    selfieLedOn = false;
     ssNotifyReplacesId = 0;
     ssFilename = QString();
+    gpioInterruptCounter = 0;
 
     tohkbd2user = new QDBusInterface("com.kimmoli.tohkbd2user", "/", "com.kimmoli.tohkbd2user", QDBusConnection::sessionBus(), this);
     tohkbd2user->setTimeout(2000);
@@ -349,14 +351,17 @@ bool Tohkbd::checkKeypadPresence()
  */
 void Tohkbd::controlLeds(bool restore)
 {
+    if (!vddEnabled) /* No power applied, get out from here */
+        return;
+
     if (restore)
     {
-        tca8424->setLeds((keymap->symPressed ? LED_SYMLOCK_ON : LED_SYMLOCK_OFF)
-                         | ((keymap->ctrlPressed || keymap->altPressed) ? LED_EXTRA_ON : LED_EXTRA_OFF)
-                         | ((capsLockSeq == 3) ? LED_CAPSLOCK_ON : LED_CAPSLOCK_OFF));
-
-        if (forceBacklightOn)
-            tca8424->setLeds(LED_BACKLIGHT_ON);
+        tca8424->setLeds(  (keymap->symPressed  ? LED_SYMLOCK_ON   : LED_SYMLOCK_OFF)
+                         | (keymap->ctrlPressed ? LED_SYMLOCK_ON   : LED_SYMLOCK_OFF)
+                         | (keymap->altPressed  ? LED_SYMLOCK_ON   : LED_SYMLOCK_OFF)
+                         | ((capsLockSeq == 3)  ? LED_CAPSLOCK_ON  : LED_CAPSLOCK_OFF)
+                         | (selfieLedOn         ? LED_SELFIE_ON    : LED_SELFIE_OFF)
+                         | (forceBacklightOn    ? LED_BACKLIGHT_ON : LED_BACKLIGHT_OFF) );
     }
     else
     {
@@ -370,6 +375,27 @@ void Tohkbd::controlLeds(bool restore)
  */
 void Tohkbd::handleGpioInterrupt()
 {
+    if (gpioInterruptCounter == 0)
+    {
+        gpioInterruptFloodDetect.start();
+    }
+
+    /* If there are > 100 interrupts within one sec, there must be something wrong */
+    if (++gpioInterruptCounter >= 100)
+    {
+        int tmsec = gpioInterruptFloodDetect.elapsed();
+
+        printf("100 interrputs in %d ms\n", tmsec);
+
+        if (tmsec < 1000)
+        {
+            /* Turn keyboard off */
+            setVddState(false);
+        }
+
+        gpioInterruptCounter = 0;
+    }
+
     if (!keypadIsPresent)
     {
         checkKeypadPresence();
@@ -383,7 +409,11 @@ void Tohkbd::handleGpioInterrupt()
             if (!r.isEmpty())
             {
                 presenceTimer->start();
-                keymap->process(r);
+
+                /* Process report only if it has correct length of 11 */
+                if (r.at(0) == 0x0b && r.at(1) == 0x00)
+                    keymap->process(r);
+
                 retries = -1;
             }
             else
@@ -439,10 +469,27 @@ void Tohkbd::handleKeyPressed(QList< QPair<int, int> > keyCode)
         return;
     }
 
-    /* Sym-Int takes a screenshot (mapped to KEY_PRINT) */
-    if (keyCode.at(0).first == KEY_PRINT)
+    /* Check custom key mappings */
+
+    if (keyCode.at(0).first > KEY_MAX)
     {
-        screenShot();
+        switch (keyCode.at(0).first)
+        {
+            /* Sym-Int takes a screenshot */
+            case KEY_TOH_SCREENSHOT:
+                screenShot();
+                break;
+
+            /* Sym-Del toggles "selfie" led */
+            case KEY_TOH_SELFIE:
+                selfieLedOn = !selfieLedOn;
+                tca8424->setLeds(selfieLedOn ? LED_SELFIE_ON : LED_SELFIE_OFF);
+                break;
+
+            default:
+                break;
+        }
+
         /* Don't process further */
         keyIsPressed = true;
         return;
@@ -472,12 +519,16 @@ void Tohkbd::handleKeyPressed(QList< QPair<int, int> > keyCode)
     {
         for (int i=0; i<keyCode.count(); i++)
         {
+            bool tweakCapsLock = (capsLockSeq == 3 && ((keyCode.at(i).first >= KEY_Q && keyCode.at(i).first <= KEY_P)
+                                                       || (keyCode.at(i).first >= KEY_A && keyCode.at(i).first <= KEY_L)
+                                                       || (keyCode.at(i).first >= KEY_Z && keyCode.at(i).first <= KEY_M) ));
+
             /* Some of the keys require shift pressed to get correct symbol */
             if (keyCode.at(i).second & FORCE_COMPOSE)
                 uinputif->sendUinputKeyPress(KEY_COMPOSE, 1);
             if ((keyCode.at(i).second & FORCE_RIGHTALT))
                 uinputif->sendUinputKeyPress(KEY_RIGHTALT, 1);
-            if ((keyCode.at(i).second & FORCE_SHIFT) || keymap->shiftPressed)
+            if ((keyCode.at(i).second & FORCE_SHIFT) || keymap->shiftPressed || tweakCapsLock)
                 uinputif->sendUinputKeyPress(KEY_LEFTSHIFT, 1);
             if ((keyCode.at(i).second & FORCE_ALT) || keymap->altPressed)
                 uinputif->sendUinputKeyPress(KEY_LEFTALT, 1);
@@ -493,7 +544,7 @@ void Tohkbd::handleKeyPressed(QList< QPair<int, int> > keyCode)
                 uinputif->sendUinputKeyPress(KEY_LEFTCTRL, 0);
             if ((keyCode.at(i).second & FORCE_ALT) || keymap->altPressed)
                 uinputif->sendUinputKeyPress(KEY_LEFTALT, 0);
-            if ((keyCode.at(i).second & FORCE_SHIFT) || keymap->shiftPressed)
+            if ((keyCode.at(i).second & FORCE_SHIFT) || keymap->shiftPressed || tweakCapsLock)
                 uinputif->sendUinputKeyPress(KEY_LEFTSHIFT, 0);
             if ((keyCode.at(i).second & FORCE_RIGHTALT))
                 uinputif->sendUinputKeyPress(KEY_RIGHTALT, 0);
@@ -576,7 +627,7 @@ void Tohkbd::handleCtrlChanged()
 
     if (keymap->stickyCtrlEnabled)
     {
-        tca8424->setLeds(keymap->ctrlPressed ? LED_EXTRA_ON : LED_EXTRA_OFF);
+        tca8424->setLeds(keymap->ctrlPressed ? LED_SYMLOCK_ON : LED_SYMLOCK_OFF);
     }
 }
 
@@ -591,7 +642,7 @@ void Tohkbd::handleAltChanged()
 
     if (keymap->stickyAltEnabled)
     {
-        tca8424->setLeds(keymap->altPressed ? LED_EXTRA_ON : LED_EXTRA_OFF);
+        tca8424->setLeds(keymap->altPressed ? LED_SYMLOCK_ON : LED_SYMLOCK_OFF);
     }
 
     if (!keymap->altPressed && taskSwitcherVisible)
@@ -641,6 +692,9 @@ QString Tohkbd::readOneLineFromFile(const QString &fileName)
  */
 void Tohkbd::checkDoWeNeedBacklight()
 {
+    if (!vddEnabled) /* No power applied, get out from here */
+        return;
+
     if (forceBacklightOn)
     {
         printf("backlight forced on\n");
@@ -657,7 +711,9 @@ void Tohkbd::checkDoWeNeedBacklight()
 
                 tca8424->setLeds(LED_BACKLIGHT_ON);
                 backlightTimer->start();
-            } else {
+            }
+            else
+            {
                 tca8424->setLeds(LED_BACKLIGHT_OFF);
             }
         }
@@ -677,6 +733,9 @@ void Tohkbd::checkDoWeNeedBacklight()
  */
 void Tohkbd::backlightTimerTimeout()
 {
+    if (!vddEnabled) /* No power applied, get out from here */
+        return;
+
     if (!forceBacklightOn)
         tca8424->setLeds(LED_BACKLIGHT_OFF);
 }
@@ -973,6 +1032,7 @@ void Tohkbd::setSettingInt(const QString &key, const int &value)
     }
     else if (key == "stickyCtrlEnabled" && (value == 0 || value == 1))
     {
+        keymap->releaseStickyModifiers();
         keymap->stickyCtrlEnabled = (value == 1);
         settings.beginGroup("generalsettings");
         settings.setValue("stickyCtrlEnabled", (value == 1));
@@ -980,6 +1040,7 @@ void Tohkbd::setSettingInt(const QString &key, const int &value)
     }
     else if (key == "stickyAltEnabled" && (value == 0 || value == 1))
     {
+        keymap->releaseStickyModifiers();
         keymap->stickyAltEnabled = (value == 1);
         settings.beginGroup("generalsettings");
         settings.setValue("stickyAltEnabled", (value == 1));
@@ -987,6 +1048,7 @@ void Tohkbd::setSettingInt(const QString &key, const int &value)
     }
     else if (key == "stickySymEnabled" && (value == 0 || value == 1))
     {
+        keymap->releaseStickyModifiers();
         keymap->stickySymEnabled = (value == 1);
         settings.beginGroup("generalsettings");
         settings.setValue("stickySymEnabled", (value == 1));

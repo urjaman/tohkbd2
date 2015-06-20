@@ -16,6 +16,10 @@ keymapping::keymapping(QObject *parent) :
     stickyAltEnabled = false;
     stickySymEnabled = false;
 
+    ctrlWasHeldDown = false;
+    symWasHeldDown = false;
+    altWasHeldDown = false;
+
     ctrlDown = false;
     altDown = false;
     symDown = false;
@@ -133,8 +137,6 @@ void keymapping::process(QByteArray inputReport)
         symPressed = symDown;
         emit symChanged();
     }
-
-    printf("There are %d usage codes to process\n", ir.length());
 
     /* Shortcut out if no actual key pressed */
     if (ir.length() == 0)
