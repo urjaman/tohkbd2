@@ -3,6 +3,9 @@ TARGET = harbour-tohkbd2-user
 CONFIG += sailfishapp link_pkgconfig
 PKGCONFIG += sailfishapp mlite5
 
+# PKGCONFIG += contentaction5
+# DEFINES += USECONTENTACTION
+
 QT += dbus gui-private
 
 # DBus
@@ -34,7 +37,8 @@ SOURCES += \
     src/tohkbd2user.cpp \
     src/adaptor.cpp \
     src/userdaemon.cpp \
-    src/viewhelper.cpp
+    src/viewhelper.cpp \
+    src/applauncher.cpp
 
 OTHER_FILES += \
     config/com.kimmoli.tohkbd2user.service \
@@ -46,4 +50,5 @@ OTHER_FILES += \
 HEADERS += \
     src/adaptor.h \
     src/userdaemon.h \
-    src/viewhelper.h
+    src/viewhelper.h \
+    src/applauncher.h

@@ -20,13 +20,13 @@ public:
     Q_INVOKABLE QVariantList getApplications();
     Q_INVOKABLE QVariantList getCurrentShortcuts();
     Q_INVOKABLE QVariantMap getCurrentSettings();
-    Q_INVOKABLE void startApplication(QString appname);
     Q_INVOKABLE void setShortcut(QString key, QString appPath);
     Q_INVOKABLE QString readDaemonVersion();
     Q_INVOKABLE QString readUserDaemonVersion();
     Q_INVOKABLE QString readSailfishVersion();
     Q_INVOKABLE void setShortcutsToDefault();
     Q_INVOKABLE void setSettingInt(QString key, int value);
+    Q_INVOKABLE void setSettingString(QString key, QString value);
 
 signals:
     void versionChanged();

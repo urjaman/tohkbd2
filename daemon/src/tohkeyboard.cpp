@@ -100,6 +100,8 @@ Tohkbd::Tohkbd(QObject *parent) :
 
     reloadSettings();
 
+    keymap->setLayout(masterLayout);
+
     if (currentActiveLayout.isEmpty())
         changeActiveLayout(true);
 
@@ -414,7 +416,16 @@ void Tohkbd::handleGpioInterrupt()
                 if (r.at(0) == 0x0b && r.at(1) == 0x00)
                     keymap->process(r);
 
-                retries = -1;
+                /* Check if interrupt line is still down, there is another report for us then */
+                if (readOneLineFromFile("/sys/class/gpio/gpio" GPIO_INT "/value") == "0")
+                {
+                    printf("Interrupt is still low. Reread report.\n");
+                    retries--;
+                }
+                else
+                {
+                    retries = -1;
+                }
             }
             else
             {
@@ -697,8 +708,6 @@ void Tohkbd::checkDoWeNeedBacklight()
 
     if (forceBacklightOn)
     {
-        printf("backlight forced on\n");
-
         tca8424->setLeds(LED_BACKLIGHT_ON);
     }
     else if (backlightEnabled)
@@ -721,7 +730,7 @@ void Tohkbd::checkDoWeNeedBacklight()
         {
             backlightTimer->start();
         }
-    }
+    } /* No backlight */
     else
     {
         backlightTimer->stop();
@@ -868,7 +877,7 @@ void Tohkbd::reloadSettings()
 
     for (int i = 0 ; i<FKEYS.length() ; i++)
     {
-        printf("app shortcut %d F%d : %s\n", FKEYS.at(i), i+1, qPrintable(applicationShortcuts[FKEYS.at(i)]));
+        printf("Shortcut F%d : %s\n", i+1, qPrintable(applicationShortcuts[FKEYS.at(i)]));
         /* Write them back, as we need default values there in settings app */
         settings.setValue(QString("KEY_F%1").arg(i+1), applicationShortcuts[FKEYS.at(i)]);
     }
@@ -889,6 +898,10 @@ void Tohkbd::reloadSettings()
 
     settings.beginGroup("orientation");
     currentOrientationLock = settings.value("originalOrientation", QString()).toString();
+    settings.endGroup();
+
+    settings.beginGroup("layoutSettings");
+    masterLayout = settings.value("masterLayout", QString(MASTER_LAYOUT)).toString();
     settings.endGroup();
 }
 
@@ -1053,6 +1066,21 @@ void Tohkbd::setSettingInt(const QString &key, const int &value)
         settings.beginGroup("generalsettings");
         settings.setValue("stickySymEnabled", (value == 1));
         settings.endGroup();
+    }
+}
+
+void Tohkbd::setSettingString(const QString &key, const QString &value)
+{
+    QSettings settings(QSettings::SystemScope, "harbour-tohkbd2", "tohkbd2");
+
+    if (key == "masterLayout")
+    {
+        settings.beginGroup("layoutsettings");
+        settings.setValue(key, value);
+        settings.endGroup();
+
+        masterLayout = value;
+        keymap->setLayout(masterLayout);
     }
 }
 
