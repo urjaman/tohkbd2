@@ -13,7 +13,7 @@
 #include <sys/types.h>
 #include "tohkeyboard.h"
 #include "toh.h"
-#include "adaptor.h"
+#include "daemonAdaptor.h"
 
 #include <QtCore/QCoreApplication>
 #include <QDBusConnection>
@@ -67,9 +67,6 @@ int main(int argc, char **argv)
      */
     dbusSystemBus.connect("com.nokia.mce", "/com/nokia/mce/signal", "com.nokia.mce.signal", "display_status_ind",
                           &tohkbd, SLOT(handleDisplayStatus(const QDBusMessage&)));
-
-    dbusSessionBus.connect("org.freedesktop.Notifications", "/org/freedesktop/Notifications", "org.freedesktop.Notifications", "ActionInvoked",
-                          &tohkbd, SLOT(handleNotificationActionInvoked(const QDBusMessage&)));
 
     return app.exec();
 }

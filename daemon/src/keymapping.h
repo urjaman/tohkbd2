@@ -5,6 +5,7 @@
 #include <QList>
 #include <QPair>
 #include <linux/input.h>
+#include "modifierhandler.h"
 
 #define FORCE_SHIFT    (1)
 #define FORCE_ALT      (2)
@@ -16,6 +17,8 @@
 // Custom keys
 #define KEY_TOH_SCREENSHOT (KEY_MAX+1)
 #define KEY_TOH_SELFIE     (KEY_MAX+2)
+#define KEY_TOH_NEWEMAIL   (KEY_MAX+3)
+#define KEY_TOH_BACKLIGHT  (KEY_MAX+4)
 
 class keymapping : public QObject
 {
@@ -25,16 +28,12 @@ public:
 
     void process(QByteArray inputReport);
 
-    void releaseStickyModifiers();
+    void releaseStickyModifiers(bool force = false);
 
-    bool shiftPressed;
-    bool ctrlPressed;
-    bool altPressed;
-    bool symPressed;
-
-    bool stickyCtrlEnabled;
-    bool stickyAltEnabled;
-    bool stickySymEnabled;
+    modifierHandler *shift;
+    modifierHandler *ctrl;
+    modifierHandler *alt;
+    modifierHandler *sym;
 
     void setLayout(QString toLayout);
 
@@ -45,18 +44,13 @@ signals:
     void symChanged();
     void keyPressed(QList< QPair<int, int> > keyCode);
     void keyReleased();
+    void toggleCapsLock();
+    void bogusDetected();
 
 public slots:
 
 private:
     bool keyIsPressed;
-
-    bool ctrlDown;
-    bool ctrlWasHeldDown;
-    bool altDown;
-    bool altWasHeldDown;
-    bool symDown;
-    bool symWasHeldDown;
 
     char pressedCode;
     QByteArray _prevInputReport;

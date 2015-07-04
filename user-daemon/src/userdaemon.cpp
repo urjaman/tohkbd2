@@ -117,9 +117,17 @@ void UserDaemon::launchApplication(const QString &desktopFilename)
 void UserDaemon::showKeyboardConnectionNotification(const bool &connected)
 {
     if (connected)
-        showNotification(tr("Keyboard connected"));
+    {
+        //: Notification shown when keyboard is connected
+        //% "Keyboard connected"
+        showNotification(qtTrId("keyb-connected"));
+    }
     else
-        showNotification(tr("Keyboard removed"));
+    {
+        //: Notification shown when keyboard is removed
+        //% "Keyboard removed"
+        showNotification(qtTrId("keyb-removed"));
+    }
 }
 
 QString UserDaemon::getVersion()
@@ -130,7 +138,11 @@ QString UserDaemon::getVersion()
 void UserDaemon::launchSuccess(const QString &appName)
 {
     if (m_launchPending)
-        showNotification(tr("Starting %1...").arg(appName));
+    {
+        //: Notification shown when application is started by pressing shortcut key
+        //% "Starting %1..."
+        showNotification(qtTrId("starting-app").arg(appName));
+    }
 
     m_launchPending = false;
 }
@@ -144,14 +156,16 @@ void UserDaemon::launchFailed()
  */
 void UserDaemon::showNotification(const QString &text)
 {
-    MNotification notification(MNotification::DeviceEvent, "", text);
-    notification.setImage(SailfishApp::pathTo("/icon-system-keyboard.png").toLocalFile());
-    notification.publish();
+    Notification notif;
+
+    notif.setPreviewBody(text);
+    notif.setHintValue("x-nemo-preview-icon", SailfishApp::pathTo("/icon-system-keyboard.png").toLocalFile());
+    notif.publish();
 }
 
-void UserDaemon::resetWithRemorse()
+void UserDaemon::actionWithRemorse(const QString &action)
 {
-    printf("tohkbd2-user: reset requested\n");
+    printf("tohkbd2-user: requested %s.\n", qPrintable(action));
 
-    emit _requestReboot();
+    emit _requestActionWithRemorse(action);
 }

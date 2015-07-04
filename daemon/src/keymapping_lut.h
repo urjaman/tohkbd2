@@ -242,7 +242,7 @@ static const int lut_sym[] =
     0xCC, KEY_9, FORCE_RIGHTALT, /* L ] */
     0xCD, KEY_8, FORCE_SHIFT, /* Ö ( */
     0xCE, KEY_9, FORCE_SHIFT, /* Ä ) */
-    //0xD1, KEY_HOME, 0,
+    0xD1, KEY_TOH_BACKLIGHT, 0,         /* Home */
     0xD2, KEY_PAGEDOWN, 0,              /* Down */
     //0xD3, KEY_END, 0,
     0xD4, KEY_DOT, FORCE_SHIFT, /* Z : */
@@ -252,11 +252,11 @@ static const int lut_sym[] =
     0xD8, KEY_102ND, FORCE_RIGHTALT, /* B | */
     0xD9, KEY_MINUS, FORCE_RIGHTALT, /* N \ */
     0xDA, KEY_M, FORCE_RIGHTALT, /* M µ */
-    //0xDB, KEY_0, FORCE_SHIFT,
-    //0xDC, KEY_1, FORCE_SHIFT,
+    0xDB, KEY_MINUS, FORCE_SHIFT, /* ? */
+    0xDC, KEY_1, FORCE_SHIFT, /* ! */
     0xDD, KEY_102ND, 0, /* , < */
     0xDE, KEY_102ND, FORCE_SHIFT, /* . > */
-    //0xEC, KEY_2, FORCE_SHIFT,
+    0xEC, KEY_TOH_NEWEMAIL, 0,          /* @ */
     //0xEF, KEY_ENTER, 0,
     //0xE9, KEY_SPACE, 0,
     0,0,0

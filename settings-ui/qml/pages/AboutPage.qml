@@ -4,7 +4,7 @@
 
 import QtQuick 2.0
 import Sailfish.Silica 1.0
-
+import "../components"
 
 Page
 {
@@ -35,8 +35,17 @@ Page
         z: 100
     }
 
+    KeyboardHandler
+    {
+        id: kbdif
+        onKeyUpPressed: flick.flick(0, -1000)
+        onKeyDownPressed: flick.flick(0, 1000)
+        onKeyBackspacePressed: pageStack.pop()
+    }
+
     SilicaFlickable
     {
+        id: flick
         anchors.fill: parent
 
         contentHeight: column.height
@@ -50,7 +59,7 @@ Page
 
             PageHeader
             {
-                title: qsTr("About...")
+                title: qsTrId("about")
             }
             Label
             {
@@ -86,7 +95,9 @@ Page
             }
             Label
             {
-                text: qsTr("The TOHKBD2 Team")
+                //: header label for the team presentation
+                //% "The TOHKBD2 Team"
+                text: qsTrId("team-header")
                 color: Theme.primaryColor
                 font.pixelSize: Theme.fontSizeMedium
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -143,28 +154,36 @@ Page
 
             Label
             {
-                text: qsTr("Settings UI version: ") + version
+                //: Version information field, for Settings UI application version
+                //% "Settings UI version: "
+                text: qsTrId("version-settings-ui") + version
                 color: Theme.primaryColor
                 font.pixelSize: Theme.fontSizeMedium
                 anchors.horizontalCenter: parent.horizontalCenter
             }
             Label
             {
-                text: qsTr("Daemon version: ") + daemonVersion
+                //: Version information field, for daemon version (which runs as root)
+                //% "Daemon version: "
+                text: qsTrId("version-daemon") + daemonVersion
                 color: Theme.primaryColor
                 font.pixelSize: Theme.fontSizeMedium
                 anchors.horizontalCenter: parent.horizontalCenter
             }
             Label
             {
-                text: qsTr("User daemon version: ") + userDaemonVersion
+                //: Version information field, for user daemon version (which runs as nemo)
+                //% "User Daemon version: "
+                text: qsTrId("version-user-daemon") + userDaemonVersion
                 color: Theme.primaryColor
                 font.pixelSize: Theme.fontSizeMedium
                 anchors.horizontalCenter: parent.horizontalCenter
             }
             Label
             {
-                text: qsTr("Sailfish version: ") + sailfishVersion
+                //: Version information field, for Sailfish OS version
+                //% "Sailfish version: "
+                text: qsTrId("version-sailfish") + sailfishVersion
                 color: Theme.primaryColor
                 font.pixelSize: Theme.fontSizeMedium
                 anchors.horizontalCenter: parent.horizontalCenter

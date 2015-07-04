@@ -1,16 +1,15 @@
 TARGET = harbour-tohkbd2-user
 
 CONFIG += sailfishapp link_pkgconfig
-PKGCONFIG += sailfishapp mlite5
+PKGCONFIG += sailfishapp mlite5 nemonotifications-qt5
 
 QT += dbus gui-private
 
-# DBus
-system(qdbusxml2cpp config/com.kimmoli.tohkbd2user.xml -i src/userdaemon.h -a src/adaptor)
+system(qdbusxml2cpp config/com.kimmoli.tohkbd2user.xml -i src/userdaemon.h -a src/userAdaptor)
+system(qdbusxml2cpp config/com.kimmoli.tohkbd2user.xml -p ../user-daemon/src/userInterface)
 
-#system(lupdate src -ts $$PWD/i18n/*.ts)
-system(lrelease $$PWD/i18n/*.ts)
-
+#system(lupdate src qml -no-obsolete -ts $$PWD/i18n/engineering_en.ts)
+system(lrelease -idbased $$PWD/i18n/*.ts)
 
 DEFINES += "APPVERSION=\\\"$${SPECVERSION}\\\""
 
@@ -32,10 +31,11 @@ message($${DEFINES})
 
 SOURCES += \
     src/tohkbd2user.cpp \
-    src/adaptor.cpp \
+    src/userAdaptor.cpp \
     src/userdaemon.cpp \
     src/viewhelper.cpp \
-    src/applauncher.cpp
+    src/applauncher.cpp \
+    src/screenshot.cpp
 
 OTHER_FILES += \
     config/com.kimmoli.tohkbd2user.service \
@@ -45,7 +45,8 @@ OTHER_FILES += \
     qml/taskswitcher.qml
 
 HEADERS += \
-    src/adaptor.h \
+    src/userAdaptor.h \
     src/userdaemon.h \
     src/viewhelper.h \
-    src/applauncher.h
+    src/applauncher.h \
+    src/screenshot.h

@@ -7,6 +7,9 @@
 #include <QObject>
 #include <QVariantList>
 
+#include "../daemon/src/daemonInterface.h"
+#include "../user-daemon/src/userInterface.h"
+
 class SettingsUi : public QObject
 {
     Q_OBJECT
@@ -25,6 +28,7 @@ public:
     Q_INVOKABLE QString readUserDaemonVersion();
     Q_INVOKABLE QString readSailfishVersion();
     Q_INVOKABLE void setShortcutsToDefault();
+    Q_INVOKABLE void setSettingsToDefault();
     Q_INVOKABLE void setSettingInt(QString key, int value);
     Q_INVOKABLE void setSettingString(QString key, QString value);
 
@@ -33,8 +37,10 @@ signals:
     void shortcutsChanged();
     void settingsChanged();
 
-    //private:
+private:
 
+    ComKimmoliTohkbd2Interface *tohkbd2daemon;
+    ComKimmoliTohkbd2userInterface *tohkbd2user;
 };
 
 

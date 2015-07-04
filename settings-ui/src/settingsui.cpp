@@ -21,6 +21,11 @@
 SettingsUi::SettingsUi(QObject *parent) :
     QObject(parent)
 {
+    tohkbd2daemon = new ComKimmoliTohkbd2Interface("com.kimmoli.tohkbd2", "/", QDBusConnection::systemBus(), this);
+    tohkbd2daemon->setTimeout(2000);
+    tohkbd2user = new ComKimmoliTohkbd2userInterface("com.kimmoli.tohkbd2user", "/", QDBusConnection::sessionBus(), this);
+    tohkbd2user->setTimeout(2000);
+
     emit versionChanged();
 }
 
@@ -88,16 +93,20 @@ QVariantMap SettingsUi::getCurrentSettings()
     settings.beginGroup("generalsettings");
 
     map.insert("backlightTimeout", settings.value("backlightTimeout", BACKLIGHT_TIMEOUT).toInt());
-
     map.insert("backlightLuxThreshold", settings.value("backlightLuxThreshold", BACKLIGHT_LUXTHRESHOLD).toInt());
     map.insert("keyRepeatDelay", settings.value("keyRepeatDelay", KEYREPEAT_DELAY).toInt());
     map.insert("keyRepeatRate", settings.value("keyRepeatRate", KEYREPEAT_RATE).toInt());
     map.insert("backlightEnabled", settings.value("backlightEnabled", BACKLIGHT_ENABLED).toBool());
     map.insert("forceLandscapeOrientation", settings.value("forceLandscapeOrientation", FORCE_LANDSCAPE_ORIENTATION).toBool());
     map.insert("forceBacklightOn", settings.value("forceBacklightOn", FORCE_BACKLIGHT_ON).toBool());
+    map.insert("stickyShiftEnabled", settings.value("stickyShiftEnabled", STICKY_SHIFT_ENABLED).toBool());
     map.insert("stickyCtrlEnabled", settings.value("stickyCtrlEnabled", STICKY_CTRL_ENABLED).toBool());
     map.insert("stickyAltEnabled", settings.value("stickyAltEnabled", STICKY_ALT_ENABLED).toBool());
     map.insert("stickySymEnabled", settings.value("stickySymEnabled", STICKY_SYM_ENABLED).toBool());
+    map.insert("lockingShiftEnabled", settings.value("lockingShiftEnabled", LOCKING_SHIFT_ENABLED).toBool());
+    map.insert("lockingCtrlEnabled", settings.value("lockingCtrlEnabled", LOCKING_CTRL_ENABLED).toBool());
+    map.insert("lockingAltEnabled", settings.value("lockingAltEnabled", LOCKING_ALT_ENABLED).toBool());
+    map.insert("lockingSymEnabled", settings.value("lockingSymEnabled", LOCKING_SYM_ENABLED).toBool());
     settings.endGroup();
 
     settings.beginGroup("layoutsettings");
@@ -150,12 +159,7 @@ void SettingsUi::setShortcut(QString key, QString appPath)
 {
     qDebug() << "setting shortcut" << key << "to" << appPath;
 
-    QDBusInterface tohkbd2daemon("com.kimmoli.tohkbd2", "/", "com.kimmoli.tohkbd2", QDBusConnection::systemBus());
-    tohkbd2daemon.setTimeout(2000);
-    QList<QVariant> args;
-    args.append(key);
-    args.append(appPath);
-    tohkbd2daemon.callWithArgumentList(QDBus::AutoDetect, "setShortcut", args);
+    tohkbd2daemon->setShortcut(key, appPath);
 
     emit shortcutsChanged();
 }
@@ -164,12 +168,7 @@ void SettingsUi::setSettingInt(QString key, int value)
 {
     qDebug() << "setting" << key << "to" << value;
 
-    QDBusInterface tohkbd2daemon("com.kimmoli.tohkbd2", "/", "com.kimmoli.tohkbd2", QDBusConnection::systemBus());
-    tohkbd2daemon.setTimeout(2000);
-    QList<QVariant> args;
-    args.append(key);
-    args.append(value);
-    tohkbd2daemon.callWithArgumentList(QDBus::AutoDetect, "setSettingInt", args);
+    tohkbd2daemon->setSettingInt(key, value);
 
     emit settingsChanged();
 }
@@ -178,12 +177,7 @@ void SettingsUi::setSettingString(QString key, QString value)
 {
     qDebug() << "setting" << key << "to" << value;
 
-    QDBusInterface tohkbd2daemon("com.kimmoli.tohkbd2", "/", "com.kimmoli.tohkbd2", QDBusConnection::systemBus());
-    tohkbd2daemon.setTimeout(2000);
-    QList<QVariant> args;
-    args.append(key);
-    args.append(value);
-    tohkbd2daemon.callWithArgumentList(QDBus::AutoDetect, "setSettingString", args);
+    tohkbd2daemon->setSettingString(key, value);
 
     emit settingsChanged();
 }
@@ -192,50 +186,62 @@ void SettingsUi::setShortcutsToDefault()
 {
     qDebug() << "setting all shortcuts to default";
 
-    QDBusInterface tohkbd2daemon("com.kimmoli.tohkbd2", "/", "com.kimmoli.tohkbd2", QDBusConnection::systemBus());
-    tohkbd2daemon.setTimeout(2000);
-    tohkbd2daemon.call(QDBus::AutoDetect, "setShortcutsToDefault");
+    tohkbd2daemon->setShortcutsToDefault();
 
     emit shortcutsChanged();
 }
 
+void SettingsUi::setSettingsToDefault()
+{
+    setSettingInt("backlightTimeout", BACKLIGHT_TIMEOUT);
+    setSettingInt("backlightLuxThreshold", BACKLIGHT_LUXTHRESHOLD);
+    setSettingInt("keyRepeatDelay", KEYREPEAT_DELAY);
+    setSettingInt("keyRepeatRate", KEYREPEAT_RATE);
+    setSettingInt("backlightEnabled", BACKLIGHT_ENABLED ? 1 : 0);
+    setSettingInt("forceLandscapeOrientation", FORCE_LANDSCAPE_ORIENTATION ? 1 : 0);
+    setSettingInt("forceBacklightOn", FORCE_BACKLIGHT_ON ? 1 : 0);
+    setSettingInt("stickyShiftEnabled", STICKY_SHIFT_ENABLED ? 1 : 0);
+    setSettingInt("stickyCtrlEnabled", STICKY_CTRL_ENABLED ? 1 : 0);
+    setSettingInt("stickyAltEnabled", STICKY_ALT_ENABLED ? 1 : 0);
+    setSettingInt("stickySymEnabled", STICKY_SYM_ENABLED ? 1 : 0);
+    setSettingInt("lockingShiftEnabled", LOCKING_SHIFT_ENABLED ? 1 : 0);
+    setSettingInt("lockingCtrlEnabled", LOCKING_CTRL_ENABLED ? 1 : 0);
+    setSettingInt("lockingAltEnabled", LOCKING_ALT_ENABLED ? 1 : 0);
+    setSettingInt("lockingSymEnabled", LOCKING_SYM_ENABLED ? 1 : 0);
+
+    emit settingsChanged();
+}
+
 QString SettingsUi::readDaemonVersion()
 {
-    QDBusInterface getDaemonVersionCall("com.kimmoli.tohkbd2", "/", "com.kimmoli.tohkbd2", QDBusConnection::systemBus());
-    getDaemonVersionCall.setTimeout(2000);
+    QString daemonVersion = tohkbd2daemon->getVersion();
 
-    QDBusMessage getDaemonVersionReply = getDaemonVersionCall.call(QDBus::AutoDetect, "getVersion");
-
-    if (getDaemonVersionReply.type() == QDBusMessage::ErrorMessage)
+    if (tohkbd2daemon->lastError().type() != QDBusError::NoError)
     {
-        qDebug() << "Error reading daemon version:" << getDaemonVersionReply.errorMessage();
-        return QString("N/A");
+        qDebug() << "Error getting daemon version " << QDBusError::errorString(tohkbd2daemon->lastError().type());
+        daemonVersion = QString("N/A");
+    }
+    else
+    {
+        qDebug() << "Daemon version is" << daemonVersion;
     }
 
-    QString daemonVersion = getDaemonVersionReply.arguments().at(0).toString();
-
-    qDebug() << "Daemon version is" << daemonVersion;
-
     return daemonVersion;
-
 }
 
 QString SettingsUi::readUserDaemonVersion()
 {
-    QDBusInterface getUserDaemonVersionCall("com.kimmoli.tohkbd2user", "/", "com.kimmoli.tohkbd2user", QDBusConnection::sessionBus());
-    getUserDaemonVersionCall.setTimeout(2000);
+    QString userDaemonVersion = tohkbd2user->getVersion();
 
-    QDBusMessage getUserDaemonVersionReply = getUserDaemonVersionCall.call(QDBus::AutoDetect, "getVersion");
-
-    if (getUserDaemonVersionReply.type() == QDBusMessage::ErrorMessage)
+    if (tohkbd2user->lastError().type() != QDBusError::NoError)
     {
-        qDebug() << "Error reading daemon version:" << getUserDaemonVersionReply.errorMessage();
-        return QString("N/A");
+        qDebug() << "Error getting user daemon version " << QDBusError::errorString(tohkbd2user->lastError().type());
+        userDaemonVersion = QString("N/A");
     }
-
-    QString userDaemonVersion = getUserDaemonVersionReply.arguments().at(0).toString();
-
-    qDebug() << "User daemon version is" << userDaemonVersion;
+    else
+    {
+        qDebug() << "User daemon version is" << userDaemonVersion;
+    }
 
     return userDaemonVersion;
 }

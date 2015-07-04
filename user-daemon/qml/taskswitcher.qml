@@ -33,9 +33,9 @@ Item
             }
         }
 
-        onStartRebootRemorse:
+        onStartRemorse:
         {
-            rebootRemorse.execute(remorsePlaceholder, qsTr("Rebooting"))
+            remorseTimer.execute(remorsePlaceholder, viewHelper.remorseText)
 
             /* Block all other touches */
             viewHelper.setTouchRegion(Qt.rect(0,0,root.width, root.height))
@@ -45,7 +45,7 @@ Item
     Sensors.OrientationSensor
     {
         id: rotationSensor
-        active: viewHelper.visible || rebootRemorse.visible
+        active: viewHelper.visible || remorseTimer.visible
         property int angle: active ? reading.orientation : 0
         onAngleChanged:
         {
@@ -98,9 +98,9 @@ Item
 
     RemorseItem
     {
-        id: rebootRemorse
-        onTriggered: viewHelper.reboot()
-        onCanceled: viewHelper.cancelReboot()
+        id: remorseTimer
+        onTriggered: viewHelper.remorseTriggered()
+        onCanceled: viewHelper.remorseCancelled()
     }
 
     Rectangle

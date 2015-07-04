@@ -20,9 +20,10 @@
 #include <sailfishapp.h>
 
 #include "userdaemon.h"
-#include "adaptor.h"
+#include "userAdaptor.h"
 #include "viewhelper.h"
 #include "applauncher.h"
+#include "screenshot.h"
 
 int main(int argc, char **argv)
 {
@@ -44,6 +45,14 @@ int main(int argc, char **argv)
 
     view->setClearBeforeRendering(true);
 
+    QTranslator engineeringTranslator;
+    engineeringTranslator.load("engineering_en", "/usr/share/harbour-tohkbd2-user/i18n");
+    app->installTranslator(&engineeringTranslator);
+
+    QTranslator translator;
+    translator.load(QLocale::system().name(), "/usr/share/harbour-tohkbd2-user/i18n");
+    app->installTranslator(&translator);
+
     view->setSource(SailfishApp::pathTo("qml/taskswitcher.qml"));
 
     QTimer::singleShot(1, helper.data(), SLOT(detachWindow()));
@@ -63,7 +72,7 @@ int main(int argc, char **argv)
     QObject::connect(&rw, SIGNAL(_showTaskSwitcher()), helper.data(), SLOT(showWindow()));
     QObject::connect(&rw, SIGNAL(_hideTaskSwitcher()), helper.data(), SLOT(hideWindow()));
     QObject::connect(&rw, SIGNAL(_nextAppTaskSwitcher()), helper.data(), SLOT(nextApp()));
-    QObject::connect(&rw, SIGNAL(_requestReboot()), helper.data(), SLOT(requestReboot()));
+    QObject::connect(&rw, SIGNAL(_requestActionWithRemorse(QString)), helper.data(), SLOT(requestActionWithRemorse(QString)));
 
     AppLauncher al;
 
@@ -72,9 +81,12 @@ int main(int argc, char **argv)
     QObject::connect(&rw, SIGNAL(_lauchApplication(QString)), &al, SLOT(launchApplication(QString)));
     QObject::connect(helper.data(), SIGNAL(_launchApplication(QString)), &al, SLOT(launchApplication(QString)));
 
-    QTranslator translator;
-    translator.load(QLocale::system().name(), "/usr/share/harbour-tohkbd2-user/i18n");
-    app->installTranslator(&translator);
+    ScreenShot ss;
+
+    QObject::connect(&rw, SIGNAL(_takeScreenShot()), &ss, SLOT(takeScreenShot()));
+
+    QDBusConnection::sessionBus().connect("org.freedesktop.Notifications", "/org/freedesktop/Notifications", "org.freedesktop.Notifications", "ActionInvoked",
+                                            &ss, SLOT(handleNotificationActionInvoked(const QDBusMessage&)));
 
     return app->exec();
 }

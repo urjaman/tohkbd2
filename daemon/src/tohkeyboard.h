@@ -21,6 +21,7 @@
 
 #include "tca8424driver.h"
 #include "keymapping.h"
+#include "../user-daemon/src/userInterface.h"
 
 #define SERVICE_NAME "com.kimmoli.tohkbd2"
 #define EVDEV_OFFSET (8)
@@ -42,7 +43,6 @@ public:
 public slots:
     /* dbus signal handler slots */
     void handleDisplayStatus(const QDBusMessage& msg);
-    void handleNotificationActionInvoked(const QDBusMessage& msg);
 
     /* keymap handler slots */
     void handleShiftChanged();
@@ -51,6 +51,8 @@ public slots:
     void handleSymChanged();
     void handleKeyPressed(QList< QPair<int, int> > keyCode);
     void handleKeyReleased();
+
+    void toggleCapsLock();
 
     /* timer timeouts */
     void backlightTimerTimeout();
@@ -90,9 +92,8 @@ private:
     void keyboardConnectedNotification(bool connected);
     void checkEEPROM();
     bool tohcoreBind(bool bind);
-    void notificationSend(QString summary, QString body);
-    void screenShot();
     void controlLeds(bool restore);
+    bool checkSailfishVersion(QString versionToCompare);
 
     int gpio_fd;
 
@@ -102,7 +103,6 @@ private:
     tca8424driver *tca8424;
     keymapping *keymap;
 
-    int capsLockSeq;
     int backlightLuxThreshold;
     int keyRepeatDelay;
     int keyRepeatRate;
@@ -116,6 +116,7 @@ private:
 
     QString currentActiveLayout;
     QString currentOrientationLock;
+    QString actualSailfishVersion;
 
     QList< QPair<int, int> > lastKeyCode;
     QHash<int, QString> applicationShortcuts;
@@ -134,17 +135,16 @@ private:
     bool forceLandscapeOrientation;
     bool taskSwitcherVisible;
     bool selfieLedOn;
+    bool capsLock;
 
-    QDBusInterface *tohkbd2user;
-
-    unsigned int ssNotifyReplacesId;
-    QString ssFilename;
+    ComKimmoliTohkbd2userInterface *tohkbd2user;
 
     QByteArray FKEYS;
 
     int gpioInterruptCounter;
     QTime gpioInterruptFloodDetect;
 
+    bool fix_CapsLock;
     QString masterLayout;
 };
 

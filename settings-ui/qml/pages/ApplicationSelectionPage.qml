@@ -5,8 +5,6 @@ Page
 {
     id: page
 
-    allowedOrientations: Orientation.Portrait | Orientation.Landscape | Orientation.LandscapeInverted
-
     property string keyId: ""
 
     signal selected(string keyId, string filePath)
@@ -25,7 +23,9 @@ Page
             width: page.width
             PageHeader
             {
-                title: qsTr("Applications")
+                //: Application shortcut selector page header
+                //% "Select application"
+                title: qsTrId("select-application")
             }
         }
 
