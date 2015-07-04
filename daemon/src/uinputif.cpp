@@ -24,7 +24,7 @@ static const char conf_devname[] = "tohkbd";
 
 int UinputIf::fd = -1;
 
-static const int eventsToRegister[] = { EV_KEY, EV_SW, EV_SYN,
+static const int eventsToRegister[] = { EV_KEY, EV_SW, EV_SYN, EV_LED,
                                         -1 };
 
 static const int keysToRegister[] = {  KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT,KEY_HOME, KEY_END, KEY_PAGEDOWN, KEY_PAGEUP,
@@ -39,9 +39,14 @@ static const int keysToRegister[] = {  KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT,KEY
                                        KEY_POWER, KEY_PLAYCD, KEY_PAUSECD, KEY_VOLUMEDOWN, KEY_VOLUMEUP,
                                        KEY_CAPSLOCK, KEY_SLASH, KEY_BACKSLASH, KEY_GRAVE, KEY_102ND,
                                        KEY_LEFTBRACE, KEY_RIGHTBRACE,
-                                           -1 };
+                                       KEY_F1, KEY_F2, KEY_F3, KEY_F4, KEY_F5, KEY_F6,
+                                       KEY_F7, KEY_F8, KEY_F9, KEY_F10, KEY_F11, KEY_F12,
+                                       -1 };
 
 static const int switchesToRegister[] = { SW_LID, SW_KEYPAD_SLIDE,
+                                          -1 };
+
+static const int ledsToRegister[] = { LED_CAPSL,
                                           -1 };
 
 UinputIf::UinputIf(QObject *parent) :
@@ -61,7 +66,7 @@ int UinputIf::openUinputDevice()
     struct uinput_user_dev uidev;
 
 
-    fd = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
+    fd = open("/dev/uinput", O_RDWR | O_NONBLOCK);
     if (fd < 0)
     {
         printf("uinput: error: open\n");
@@ -94,6 +99,16 @@ int UinputIf::openUinputDevice()
         if (ioctl(fd, UI_SET_SWBIT, switchesToRegister[i]) < 0)
         {
             printf("uinput: error: ioctl UI_SET_SWBIT %d\n", i);
+            return false;
+        }
+    }
+
+    /* Enable selected LEDs */
+    for (i=0; ledsToRegister[i] != -1; i++)
+    {
+        if (ioctl(fd, UI_SET_LEDBIT, ledsToRegister[i]) < 0)
+        {
+            printf("uinput: error: ioctl UI_SET_LEDBIT %d\n", i);
             return false;
         }
     }
