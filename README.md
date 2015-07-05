@@ -31,7 +31,7 @@ But if you really want to:
  * either install the SDK and deploy your own RPM built from this branch 
  * or build it on your phone, but its a lot of work to set up the phone to build stuff, little bit of help is there:   
 https://together.jolla.com/question/63393/compile-qt-app-inside-jolla/?page=1#63464
- * And install keymaps/scandic.qmap in place of /usr/share/qt5/keymaps/boston.qmap
+ * And install keymaps/scandic.qmap in place of /usr/share/qt5/keymaps/boston.qmap and restart lipstick or reboot
 
 ### References:
 
