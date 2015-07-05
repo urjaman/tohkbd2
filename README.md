@@ -26,17 +26,12 @@ harbour-ambience-tohkbd2
   * some of keys have special function, like starting a application. these are processed in the daemon.
   
 
-### Installing through mer-obs repo:
-
-mer-obs https://build.merproject.org/project/show/home:kimmoli:tohs
-
-```
- devel-su
- ssu ar tohs http://repo.merproject.org/obs/home:/kimmoli:/tohs/sailfish_latest_armv7hl
- ssu ur
- pkcon repo-set-data tohs refresh-now true
- pkcon install harbour-ambience-tohkbd2
-```
+### Installing ... dont
+But if you really want to:
+ * either install the SDK and deploy your own RPM built from this branch 
+ * or build it on your phone, but its a lot of work to set up the phone to build stuff, little bit of help is there:   
+https://together.jolla.com/question/63393/compile-qt-app-inside-jolla/?page=1#63464
+ * And install keymaps/scandic.qmap in place of /usr/share/qt5/keymaps/boston.qmap
 
 ### References:
 
