@@ -125,8 +125,8 @@ Tohkbd::Tohkbd(QObject *parent) :
     connect(keymap, SIGNAL(altChanged()), this, SLOT(handleAltChanged()));
     connect(keymap, SIGNAL(symChanged()), this, SLOT(handleSymChanged()));
     connect(keymap, SIGNAL(toggleCapsLock()), this, SLOT(toggleCapsLock()));
-    connect(keymap, SIGNAL(keyPressed(QList< QPair<int, int> >)), this, SLOT(handleKeyPressed(QList< QPair<int, int> >)));
-    connect(keymap, SIGNAL(keyReleased()), this, SLOT(handleKeyReleased()));
+    connect(keymap, SIGNAL(keyPressed(QPair<int, int>)), this, SLOT(handleKeyPressed(QPair<int, int>)));
+    connect(keymap, SIGNAL(keyReleased(int)), this, SLOT(handleKeyReleased(int)));
     connect(keymap, SIGNAL(bogusDetected()), tca8424, SLOT(reset()));
     connect(keymap, SIGNAL(setKeymapLayout(QString)), tohkbd2user, SLOT(setKeymapLayout(QString)));
     connect(keymap, SIGNAL(setKeymapVariant(QString)), tohkbd2user, SLOT(setKeymapVariant(QString)));
@@ -340,7 +340,7 @@ bool Tohkbd::checkKeypadPresence()
         {
             keyboardConnectedNotification(false);
             presenceTimer->stop();
-            handleKeyReleased();
+            keymap->process(QByteArray());
         }
 
         keypadIsPresent = false;
@@ -359,7 +359,7 @@ bool Tohkbd::checkKeypadPresence()
             /* Keyboard power interrupt shortly? refresh leds just in case */
             controlLeds(true);
             /* ...and release possibly stuck keys */
-            handleKeyReleased();
+            keymap->process(QByteArray());
         }
 
         presenceTimer->start();
@@ -495,10 +495,8 @@ void Tohkbd::handleGpioInterrupt()
 
 /* Key press handler. Called from keymap->process() if actual key was pressed
  */
-void Tohkbd::handleKeyPressed(QList< QPair<int, int> > keyCode)
+void Tohkbd::handleKeyPressed(QPair<int, int> keyCode)
 {
-    bool processAllKeys = true;
-
     /* No need to do this all if we are repeating */
     if (!keyRepeat)
     {
@@ -514,7 +512,7 @@ void Tohkbd::handleKeyPressed(QList< QPair<int, int> > keyCode)
         checkDoWeNeedBacklight();
 
         /* alt+TAB is the task-switcher */
-        if (keymap->alt->pressed && keyCode.at(0).first == KEY_TAB)
+        if (keymap->alt->pressed && keyCode.first == KEY_TAB)
         {
             if (!taskSwitcherVisible)
             {
@@ -535,9 +533,9 @@ void Tohkbd::handleKeyPressed(QList< QPair<int, int> > keyCode)
 
         /* Check custom key mappings */
 
-        if (keyCode.at(0).first > KEY_MAX)
+        if (keyCode.first > KEY_MAX)
         {
-            switch (keyCode.at(0).first)
+            switch (keyCode.first)
             {
                 /* Sym-Int takes a screenshot */
                 case KEY_TOH_SCREENSHOT:
@@ -581,10 +579,10 @@ void Tohkbd::handleKeyPressed(QList< QPair<int, int> > keyCode)
 
         /* if F1...F12 key is pressed then launch detached process */
 
-        if (FKEYS.contains(keyCode.at(0).first))
+        if (FKEYS.contains(keyCode.first))
         {
             /* Ctrl-Sym-F1 is Help */
-            if (keyCode.at(0).first == KEY_F1 && keymap->ctrl->pressed)
+            if (keyCode.first == KEY_F1 && keymap->ctrl->pressed)
             {
                 tohkbd2settingsui->showHelp();
 
@@ -592,7 +590,7 @@ void Tohkbd::handleKeyPressed(QList< QPair<int, int> > keyCode)
                 return;
             }
 
-            QString cmd = applicationShortcuts[keyCode.at(0).first];
+            QString cmd = applicationShortcuts[keyCode.first];
 
             if (!cmd.isEmpty())
             {
@@ -609,7 +607,7 @@ void Tohkbd::handleKeyPressed(QList< QPair<int, int> > keyCode)
 
         /* Catch ctrl-alt-del (Works only from left ctrl or stickies) */
 
-        if (keymap->alt->pressed && keymap->ctrl->pressed && keyCode.at(0).first == KEY_DELETE)
+        if (keymap->alt->pressed && keymap->ctrl->pressed && keyCode.first == KEY_DELETE)
         {
             if (verboseMode)
                 printf("Requesting user daemon to reboot with remorse.\n");
@@ -622,7 +620,7 @@ void Tohkbd::handleKeyPressed(QList< QPair<int, int> > keyCode)
 
         /* Catch ctrl-alt-backspace to restart lipstick (Works only from left ctrl or stickies) */
 
-        if (keymap->alt->pressed && keymap->ctrl->pressed && keyCode.at(0).first == KEY_BACKSPACE)
+        if (keymap->alt->pressed && keymap->ctrl->pressed && keyCode.first == KEY_BACKSPACE)
         {
             if (verboseMode)
                 printf("Requesting user daemon to restart lipstick with remorse.\n");
@@ -634,17 +632,28 @@ void Tohkbd::handleKeyPressed(QList< QPair<int, int> > keyCode)
         }
     }
 
-    if (processAllKeys)
-    {
-        for (int i=0; i<keyCode.count(); i++)
-        {
             bool tweakCapsLock = false;
             if (fix_CapsLock)
-                tweakCapsLock = (capsLock && ((keyCode.at(i).first >= KEY_Q && keyCode.at(i).first <= KEY_P)
-                                          || (keyCode.at(i).first >= KEY_A && keyCode.at(i).first <= KEY_L)
-                                          || (keyCode.at(i).first >= KEY_Z && keyCode.at(i).first <= KEY_M) ));
+                tweakCapsLock = (capsLock && ((keyCode.first >= KEY_Q && keyCode.first <= KEY_P)
+                                          || (keyCode.first >= KEY_A && keyCode.first <= KEY_L)
+                                          || (keyCode.first >= KEY_Z && keyCode.first <= KEY_M) ));
 
-            if (keyCode.at(i).second & FORCE_COMPOSE)
+            if (tweakCapsLock) keyCode.second |= FORCE_SHIFT;
+
+            if (keyCode.second != lastKeyCode.second) {
+                QThread::msleep(KEYREPEAT_RATE);
+            if ((lastKeyCode.second & FORCE_CTRL))
+                uinputif->sendUinputKeyPress(KEY_LEFTCTRL, keymap->ctrl->pressed ? 1 : 0);
+            if ((lastKeyCode.second & FORCE_ALT))
+                uinputif->sendUinputKeyPress(KEY_LEFTALT, keymap->alt->pressed ? 1 : 0);
+            if ((lastKeyCode.second & FORCE_SHIFT))
+                uinputif->sendUinputKeyPress(KEY_LEFTSHIFT, keymap->shift->pressed ? 1 : 0);
+            if ((lastKeyCode.second & FORCE_RIGHTALT))
+                uinputif->sendUinputKeyPress(KEY_RIGHTALT, 0);
+                uinputif->synUinputDevice();		
+            }
+
+            if (keyCode.second & FORCE_COMPOSE)
             {
                 uinputif->sendUinputKeyPress(KEY_COMPOSE, 1);
                 QThread::msleep(KEYREPEAT_RATE);
@@ -652,30 +661,18 @@ void Tohkbd::handleKeyPressed(QList< QPair<int, int> > keyCode)
                 uinputif->synUinputDevice();
             }
 
-            if ((keyCode.at(i).second & FORCE_RIGHTALT))
+            if ((keyCode.second & FORCE_RIGHTALT))
                 uinputif->sendUinputKeyPress(KEY_RIGHTALT, 1);
-            if ((keyCode.at(i).second & FORCE_SHIFT) || tweakCapsLock)
+            if ((keyCode.second & FORCE_SHIFT))
                 uinputif->sendUinputKeyPress(KEY_LEFTSHIFT, 1);
-            if ((keyCode.at(i).second & FORCE_ALT))
+            if ((keyCode.second & FORCE_ALT))
                 uinputif->sendUinputKeyPress(KEY_LEFTALT, 1);
-            if ((keyCode.at(i).second & FORCE_CTRL))
+            if ((keyCode.second & FORCE_CTRL))
                 uinputif->sendUinputKeyPress(KEY_LEFTCTRL, 1);
 
-            /* Mimic key pressing */
-            uinputif->sendUinputKeyPress(keyCode.at(i).first, 1);
-            QThread::msleep(KEYREPEAT_RATE);
-            uinputif->sendUinputKeyPress(keyCode.at(i).first, 0);
+            /* key down */
+            uinputif->sendUinputKeyPress(keyCode.first, keyRepeat?2:1);
 
-            if ((keyCode.at(i).second & FORCE_CTRL))
-                uinputif->sendUinputKeyPress(KEY_LEFTCTRL, 0);
-            if ((keyCode.at(i).second & FORCE_ALT))
-                uinputif->sendUinputKeyPress(KEY_LEFTALT, 0);
-            if ((keyCode.at(i).second & FORCE_SHIFT) || tweakCapsLock)
-                uinputif->sendUinputKeyPress(KEY_LEFTSHIFT, 0);
-            if ((keyCode.at(i).second & FORCE_RIGHTALT))
-                uinputif->sendUinputKeyPress(KEY_RIGHTALT, 0);
-        }
-    }
 
     uinputif->synUinputDevice();
 
@@ -713,14 +710,28 @@ void Tohkbd::repeatTimerTimeout()
 
 /* Stop repeat timer when key released
  */
-void Tohkbd::handleKeyReleased()
+void Tohkbd::handleKeyReleased(int key)
 {
     repeatTimer->stop();
     keyRepeat = false;
 
-    if (keyIsPressed)
+    /* key release */
+    uinputif->sendUinputKeyPress(key, 0);
+
+    if (keyIsPressed) {
         keymap->releaseStickyModifiers();
 
+            if ((lastKeyCode.second & FORCE_CTRL))
+                uinputif->sendUinputKeyPress(KEY_LEFTCTRL, keymap->ctrl->pressed ? 1 : 0);
+            if ((lastKeyCode.second & FORCE_ALT))
+                uinputif->sendUinputKeyPress(KEY_LEFTALT, keymap->alt->pressed ? 1 : 0);
+            if ((lastKeyCode.second & FORCE_SHIFT))
+                uinputif->sendUinputKeyPress(KEY_LEFTSHIFT, keymap->shift->pressed ? 1 : 0);
+            if ((lastKeyCode.second & FORCE_RIGHTALT))
+                uinputif->sendUinputKeyPress(KEY_RIGHTALT, 0);
+            lastKeyCode.second = 0;
+    }
+    uinputif->synUinputDevice();
     keyIsPressed = false;
 }
 
@@ -756,7 +767,6 @@ void Tohkbd::handleAltChanged()
     checkDoWeNeedBacklight();
 
     uinputif->sendUinputKeyPress(KEY_LEFTALT, keymap->alt->pressed ? 1 : 0);
-    QThread::msleep(KEYREPEAT_RATE);
     uinputif->synUinputDevice();
 
     if (!keymap->alt->pressed && taskSwitcherVisible)

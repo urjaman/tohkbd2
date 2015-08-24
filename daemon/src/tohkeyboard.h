@@ -51,8 +51,8 @@ public slots:
     void handleCtrlChanged();
     void handleAltChanged();
     void handleSymChanged();
-    void handleKeyPressed(QList< QPair<int, int> > keyCode);
-    void handleKeyReleased();
+    void handleKeyPressed(QPair<int, int> keyCode);
+    void handleKeyReleased(int key);
     void handlePhysicalLayout(const QString &layout);
     void toggleCapsLock();
     void capsLockLedState(bool state);
@@ -125,7 +125,7 @@ private:
     QString currentOrientationLock;
     QString actualSailfishVersion;
 
-    QList< QPair<int, int> > lastKeyCode;
+    QPair<int, int> lastKeyCode;
     QHash<int, QString> applicationShortcuts;
 
     bool keypadIsPresent;

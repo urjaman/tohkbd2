@@ -45,8 +45,8 @@ signals:
     void ctrlChanged();
     void altChanged();
     void symChanged();
-    void keyPressed(QList< QPair<int, int> > keyCode);
-    void keyReleased();
+    void keyPressed(QPair<int, int> keyCode);
+    void keyReleased(int key);
     void toggleCapsLock();
     void bogusDetected();
     void setKeymapVariant(QString keymapVariant);
@@ -61,8 +61,8 @@ private:
 
     bool keyIsPressed;
 
-    char pressedCode;
     QByteArray _prevInputReport;
+    QByteArray _symWhenPressed;
 
     QString layout;
     QString layoutPath;

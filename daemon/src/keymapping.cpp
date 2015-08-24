@@ -31,7 +31,6 @@ keymapping::keymapping(QString pathToLayouts, QObject *parent) :
     alternativeLayout = QString();
     originalLayout = QString();
 
-    pressedCode = 0;
     verboseMode = false;
 
     shift = new modifierHandler("shift");
@@ -61,8 +60,6 @@ keymapping::keymapping(QString pathToLayouts, QObject *parent) :
 void keymapping::process(QByteArray inputReport)
 {
     int n;
-    QList< QPair<int,int> > retKey;
-    char irCode = 0;
 
     bool leftShiftDown = false;
     bool shiftDown = false;
@@ -79,6 +76,7 @@ void keymapping::process(QByteArray inputReport)
     }
 
     QByteArray ir = inputReport.mid(5, 6);
+    QByteArray nswp;
 
     /* Remove empty usage code bytes */
     int j;
@@ -124,61 +122,42 @@ void keymapping::process(QByteArray inputReport)
         return;
     }
 
+    /* TODO: differentiate lshift and rshift in output codes (also l/r ctrl) */
     shift->set(leftShiftDown || shiftDown, ir.isEmpty());
     ctrl->set(ctrlDown, ir.isEmpty());
     alt->set(altDown, ir.isEmpty());
     sym->set(symDown, ir.isEmpty());
 
-    /* Shortcut out if no actual key pressed */
-    if (ir.length() == 0)
+    /* Shortcut out if no key removed because useless special case... */
+
+    for (int i=0; i < _prevInputReport.length(); i++)
     {
-        if (pressedCode)
+        if (!ir.contains(_prevInputReport.at(i)))
         {
-            pressedCode = 0;
-            emit keyReleased();
+            /* emit released */
+            QPair <int,int> key = _symWhenPressed.at(i) ? lut_sym.value(_prevInputReport.at(i)) : 
+                    lut_plain.value(_prevInputReport.at(i));
+            if (key.first) emit keyReleased(key.first);
         }
-        _prevInputReport = ir;
-        return;
     }
 
-    /* Check for new code in report. */
-    for (int i=ir.length()-1 ; i >= 0 ; --i)
+    /* Check for new codes in report. */
+    for (int i=0; i < ir.length(); i++)
     {
+	int s;
         if (!_prevInputReport.contains(ir.at(i)))
         {
-            irCode = ir.at(i);
-                break;
+            s = sym->pressed ? 1 : 0;
+            QPair <int,int> key = s ? lut_sym.value(ir.at(i)) : lut_plain.value(ir.at(i));
+            if (key.first) emit keyPressed(key);
+        } else {
+            s = _symWhenPressed.at(_prevInputReport.indexOf(ir.at(i)));
         }
+        nswp[i] = s;
     }
-
-    if (sym->pressed && irCode) /* With SYM modifier */
-    {
-        retKey.append(lut_sym.value(irCode));
-    }
-    else if (irCode) /* Plain key */
-    {
-        retKey.append(lut_plain.value(irCode));
-    }
-
-    /* If key is changed on the fly without break... emit released */
-    if (pressedCode)
-    {
-        if ( (!ir.contains(pressedCode)) || ((irCode) && (pressedCode != irCode)) )
-        {
-            pressedCode = 0;
-            emit keyReleased();
-        }
-        if (_prevInputReport == ir)
-            return;
-    }
-
-    if (!retKey.empty())
-    {
-        pressedCode = irCode;
-        emit keyPressed(retKey);
-    }
-
+    
     _prevInputReport = ir;
+    _symWhenPressed = nswp;
 }
 
 void keymapping::releaseStickyModifiers(bool force)
