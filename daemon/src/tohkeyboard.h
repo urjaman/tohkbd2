@@ -123,7 +123,6 @@ private:
 
     QString currentActiveLayout;
     QString currentOrientationLock;
-    QString actualSailfishVersion;
 
     QPair<int, int> lastKeyCode;
     QHash<int, QString> applicationShortcuts;
