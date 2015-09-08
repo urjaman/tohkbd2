@@ -497,6 +497,8 @@ void Tohkbd::handleGpioInterrupt()
  */
 void Tohkbd::handleKeyPressed(QPair<int, int> keyCode)
 {
+    if (keyCode != lastKeyCode) keyRepeat = false; /* reset repeat on new key. */
+
     /* No need to do this all if we are repeating */
     if (!keyRepeat)
     {
@@ -671,6 +673,9 @@ void Tohkbd::handleKeyPressed(QPair<int, int> keyCode)
                 uinputif->sendUinputKeyPress(KEY_LEFTCTRL, 1);
 
             /* key down */
+	    if (verboseMode) 
+                printf("keyDown %d rep=%d\n", keyCode.first, keyRepeat?1:0);
+
             uinputif->sendUinputKeyPress(keyCode.first, keyRepeat?2:1);
 
 
@@ -716,6 +721,9 @@ void Tohkbd::handleKeyReleased(int key)
     keyRepeat = false;
 
     /* key release */
+    if (verboseMode) 
+        printf("keyUp %d\n", key);
+
     uinputif->sendUinputKeyPress(key, 0);
 
     if (keyIsPressed) {
