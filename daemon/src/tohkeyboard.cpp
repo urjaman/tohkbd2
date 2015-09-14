@@ -13,6 +13,9 @@
 #include <QHostAddress>
 #include <QtSystemInfo/QDeviceInfo>
 
+#include <mce/dbus-names.h>
+#include <mce/mode-names.h>
+
 #include <unistd.h>
 #include <linux/input.h>
 #include <linux/uinput.h>
@@ -52,14 +55,36 @@ Tohkbd::Tohkbd(QObject *parent) :
     selfieLedOn = false;
     gpioInterruptCounter = 0;
     verboseMode = true;
+    turnDisplayOffWhenRemoved = false;
 
     fix_CapsLock = !checkSailfishVersion("1.1.7.0");
     capsLock = false;
+}
 
+/* Initialise. Returns false if failed
+ */
+bool Tohkbd::init()
+{
     tohkbd2user = new ComKimmoliTohkbd2userInterface("com.kimmoli.tohkbd2user", "/", QDBusConnection::sessionBus(), this);
     tohkbd2user->setTimeout(2000);
 
-    printf("waking up user daemon %s", qPrintable(tohkbd2user->getVersion()));
+    QString userDaemonVersion;
+
+    printf("waking up user daemon\n");
+
+    userDaemonVersion = tohkbd2user->getVersion();
+
+    /* User daemon needs to be same version as this daemon */
+    if (userDaemonVersion == APPVERSION)
+    {
+        printf("user daemon version %s\n", qPrintable(userDaemonVersion));
+    }
+    else
+    {
+        tohkbd2user->quit();
+        printf("wrong version of user daemon \"%s\"\n", qPrintable(userDaemonVersion));
+        return false;
+    }
 
     connect(tohkbd2user, SIGNAL(physicalLayoutChanged(QString)), this, SLOT(handlePhysicalLayout(QString)));
 
@@ -111,6 +136,8 @@ Tohkbd::Tohkbd(QObject *parent) :
 
     reloadSettings();
 
+    displayIsOn = getCurrentDisplayState();
+
     if (currentActiveLayout.isEmpty())
         changeActiveLayout(true);
 
@@ -137,6 +164,8 @@ Tohkbd::Tohkbd(QObject *parent) :
 
     printf("physical layout is %s\n", qPrintable(currentPhysicalLayout));
     keymap->setLayout(currentPhysicalLayout);
+
+    return true;
 }
 
 /* Remove uinput device, stop threads and unregister from dbus
@@ -180,7 +209,7 @@ Tohkbd::~Tohkbd()
 
 /* Register to dbus
  */
-void Tohkbd::registerDBus()
+bool Tohkbd::registerDBus()
 {
     if (!dbusRegistered)
     {
@@ -188,19 +217,18 @@ void Tohkbd::registerDBus()
         QDBusConnection connection = QDBusConnection::systemBus();
         if (!connection.registerService(SERVICE))
         {
-            QCoreApplication::quit();
-            return;
+            return false;
         }
 
         if (!connection.registerObject(PATH, this))
         {
-            QCoreApplication::quit();
-            return;
+            return false;
         }
         dbusRegistered = true;
 
         printf("tohkbd2: succesfully registered to dbus systemBus \"%s\"\n", SERVICE);
     }
+    return dbusRegistered;
 }
 
 /* quit
@@ -340,7 +368,6 @@ bool Tohkbd::checkKeypadPresence()
 
         if (keypadIsPresent)
         {
-            keyboardConnectedNotification(false);
             presenceTimer->stop();
             keymap->process(QByteArray());
         }
@@ -351,7 +378,6 @@ bool Tohkbd::checkKeypadPresence()
     {
         if (!keypadIsPresent)
         {
-            keyboardConnectedNotification(true);
             controlLeds(true);
             checkDoWeNeedBacklight();
             checkEEPROM();
@@ -370,13 +396,25 @@ bool Tohkbd::checkKeypadPresence()
 
     if (__prev_keypadPresence != keypadIsPresent)
     {
+        keyboardConnectedNotification(keypadIsPresent);
+
         emit keyboardConnectedChanged(keypadIsPresent);
         emitKeypadSlideEvent(keypadIsPresent);
 
         vkbLayoutIsTohkbd = keypadIsPresent;
         changeActiveLayout();
+
         if (forceLandscapeOrientation)
+        {
             changeOrientationLock();
+        }
+
+        if (turnDisplayOffWhenRemoved && !keypadIsPresent && displayIsOn)
+        {
+            /* if enabled and display is on, turn display off when keyboard is removed */
+            QDBusMessage m = QDBusMessage::createMethodCall(MCE_SERVICE, MCE_REQUEST_PATH, MCE_REQUEST_IF, MCE_DISPLAY_OFF_REQ);
+            QDBusConnection::systemBus().send(m);
+        }
     }
 
     return keypadIsPresent;
@@ -928,7 +966,7 @@ void Tohkbd::changeActiveLayout(bool justGetIt)
  */
 void Tohkbd::changeOrientationLock(bool justGetIt)
 {
-    QString __currentOrientationLock = tohkbd2user->call(QDBus::AutoDetect, "getOrientationLock").arguments().at(0).toString();
+    QString __currentOrientationLock = tohkbd2user->getOrientationLock();
 
     if (verboseMode)
         printf("Current orientation lock is %s\n", qPrintable(__currentOrientationLock));
@@ -1048,6 +1086,7 @@ void Tohkbd::reloadSettings()
 
     forceLandscapeOrientation = settings.value("forceLandscapeOrientation", FORCE_LANDSCAPE_ORIENTATION).toBool();
     forceBacklightOn = settings.value("forceBacklightOn", FORCE_BACKLIGHT_ON).toBool();
+    turnDisplayOffWhenRemoved = settings.value("turnDisplayOffWhenRemoved", TURN_DISPLAY_OFF_WHEN_REMOVED).toBool();
     settings.endGroup();
 }
 
@@ -1127,6 +1166,9 @@ void Tohkbd::setSettingInt(const QString &key, const int &value)
 {
     QSettings settings(QSettings::SystemScope, "harbour-tohkbd2", "tohkbd2");
 
+    if (verboseMode)
+        printf("Setting %s to %d\n", qPrintable(key), value);
+
     if (key == "backlightTimeout" && value >= 100 && value <= 30000)
     {
         settings.beginGroup("generalsettings");
@@ -1187,6 +1229,13 @@ void Tohkbd::setSettingInt(const QString &key, const int &value)
             tohkbd2user->setOrientationLock("landscape");
         }
     }
+    else if (key == "turnDisplayOffWhenRemoved" && (value == 0 || value == 1))
+    {
+        settings.beginGroup("generalsettings");
+        settings.setValue("turnDisplayOffWhenRemoved", (value == 1));
+        turnDisplayOffWhenRemoved = (value == 1);
+        settings.endGroup();
+    }
     else if (key == "verboseMode"  && (value == 0 || value == 1))
     {
         settings.beginGroup("debug");
@@ -1207,7 +1256,7 @@ void Tohkbd::setSettingString(const QString &key, const QString &value)
     settings.endGroup();
 
     if(verboseMode)
-        printf("setSettingsString %s %s\n", qPrintable(key), qPrintable(value));
+        printf("setting %s to %s\n", qPrintable(key), qPrintable(value));
 
     if (key == "modifierShiftMode" && modifierHandler::KeyModeNames.contains(value))
         keymap->shift->setMode(modifierHandler::toKeyMode(value));
@@ -1373,4 +1422,19 @@ void Tohkbd::setVerboseMode(bool verbose)
     keymap->ctrl->verboseMode = verbose;
     keymap->alt->verboseMode = verbose;
     keymap->sym->verboseMode = verbose;
+}
+
+/*
+ * Gets current display state from mce
+ * returns false if off, else true
+ */
+bool Tohkbd::getCurrentDisplayState()
+{
+    QDBusMessage m = QDBusMessage::createMethodCall(MCE_SERVICE, MCE_REQUEST_PATH, MCE_REQUEST_IF,  MCE_DISPLAY_STATUS_GET);
+    QString reply = QDBusConnection::systemBus().call(m).arguments().at(0).toString();
+
+    if (verboseMode)
+        printf("Display status is \"%s\"\n", qPrintable(reply));
+
+    return (reply.compare(MCE_DISPLAY_OFF_STRING) != 0);
 }

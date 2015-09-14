@@ -40,7 +40,8 @@ public:
     explicit Tohkbd(QObject *parent = 0);
     virtual ~Tohkbd();
 
-    void registerDBus();
+    bool init();
+    bool registerDBus();
 
 public slots:
     /* dbus signal handler slots */
@@ -99,6 +100,7 @@ private:
     void controlLeds(bool restore);
     bool checkSailfishVersion(QString versionToCompare);
     void setVerboseMode(bool verbose);
+    bool getCurrentDisplayState();
 
     int gpio_fd;
 
@@ -143,6 +145,7 @@ private:
     bool selfieLedOn;
     bool capsLock;
     bool verboseMode;
+    bool turnDisplayOffWhenRemoved;
 
     ComKimmoliTohkbd2userInterface *tohkbd2user;
     ComKimmoliTohkbd2settingsuiInterface *tohkbd2settingsui;
