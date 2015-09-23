@@ -65,14 +65,14 @@ Page
                 //: Backlight always on description
                 //% "Backlight is always on when keyboard attached and phone's display is on"
                 description: qsTrId("bg-always-on-desc")
-                onCheckedChanged: if (checked !== settings["forceBacklightOn"]) settingsui.setSettingInt("forceBacklightOn", checked ? 1 : 0)
+                onCheckedChanged: if (checked !== settings["forceBacklightOn"]) settingsui.setSetting("forceBacklightOn", checked)
                 width: parent.width - 2*Theme.paddingLarge
                 Component.onCompleted:
                 {
                     checked = settings["forceBacklightOn"]
                     /* Update to restore if overridden with key-combo Sym+Home */
                     if (!checked && !settings["forceBacklightOn"])
-                        settingsui.setSettingInt("forceBacklightOn", 0)
+                        settingsui.setSetting("forceBacklightOn", false)
                 }
             }
             TextSwitch
@@ -84,7 +84,7 @@ Page
                 //: Backlight automatic description
                 //% "Automatic backlight enable or always off"
                 description: qsTrId("bg-automatic-desc")
-                onCheckedChanged: if (checked !== settings["backlightEnabled"]) settingsui.setSettingInt("backlightEnabled", checked ? 1 : 0)
+                onCheckedChanged: if (checked !== settings["backlightEnabled"]) settingsui.setSetting("backlightEnabled", checked)
                 width: parent.width - 2*Theme.paddingLarge
                 Component.onCompleted: checked = settings["backlightEnabled"]
                 enabled: !alwaysOn.checked
@@ -111,7 +111,7 @@ Page
                     if (wasChanged)
                     {
                         wasChanged = false
-                        settingsui.setSettingInt("backlightTimeout", value)
+                        settingsui.setSetting("backlightTimeout", value)
                     }
                 }
             }
@@ -137,7 +137,7 @@ Page
                     if (wasChanged)
                     {
                         wasChanged = false
-                        settingsui.setSettingInt("backlightLuxThreshold", value)
+                        settingsui.setSetting("backlightLuxThreshold", value)
                     }
                 }
             }
@@ -156,19 +156,31 @@ Page
                 //: Force landscape switch description
                 //% "Force landscape orientation when keyboard attached"
                 description: qsTrId("orientation-force-landscape-desc")
-                onCheckedChanged: settingsui.setSettingInt("forceLandscapeOrientation", checked ? 1 : 0)
+                onCheckedChanged: settingsui.setSetting("forceLandscapeOrientation", checked)
                 width: parent.width - 2*Theme.paddingLarge
                 Component.onCompleted: checked = settings["forceLandscapeOrientation"]
             }
             TextSwitch
             {
-                //: Display Off when removed switch text
-                //% "Display Off when removed"
+                //: Keep display on when connected switch text
+                //% "Display on when connected"
+                text: qsTrId("keep-display-on-when-connected-sw")
+                //: Keep display on when connected switch description
+                //% "Keep display on when keyboard is connected"
+                description: qsTrId("keep-display-on-when-connected-desc")
+                onCheckedChanged: settingsui.setSetting("keepDisplayOnWhenConnected", checked)
+                width: parent.width - 2*Theme.paddingLarge
+                Component.onCompleted: checked = settings["keepDisplayOnWhenConnected"]
+            }
+            TextSwitch
+            {
+                //: Display off when removed switch text
+                //% "Display off when removed"
                 text: qsTrId("turn-display-off-when-removed-sw")
-                //: Display Off when removed switch description
-                //% "Turn display off when keyboard removed"
+                //: Display off when removed switch description
+                //% "Turn display off when keyboard is removed"
                 description: qsTrId("turn-display-off-when-removed-desc")
-                onCheckedChanged: settingsui.setSettingInt("turnDisplayOffWhenRemoved", checked ? 1 : 0)
+                onCheckedChanged: settingsui.setSetting("turnDisplayOffWhenRemoved", checked)
                 width: parent.width - 2*Theme.paddingLarge
                 Component.onCompleted: checked = settings["turnDisplayOffWhenRemoved"]
             }
@@ -199,7 +211,7 @@ Page
                     if (wasChanged)
                     {
                         wasChanged = false
-                        settingsui.setSettingInt("keyRepeatDelay", value)
+                        settingsui.setSetting("keyRepeatDelay", value)
                     }
                 }
             }
@@ -223,7 +235,7 @@ Page
                     if (wasChanged)
                     {
                         wasChanged = false
-                        settingsui.setSettingInt("keyRepeatRate", value)
+                        settingsui.setSetting("keyRepeatRate", value)
                     }
                 }
             }
@@ -274,7 +286,7 @@ Page
                         Repeater
                         {
                             model: modifierModes
-                            MenuItem { text: name; onClicked: settingsui.setSettingString(key, code); }
+                            MenuItem { text: name; onClicked: settingsui.setSetting(key, code); }
                         }
                     }
                     Component.onCompleted:
@@ -307,7 +319,7 @@ Page
                 //: Verbose mode switch description
                 //% "Print more information in Journal logs. Use 'devel-su journalctl -fa | grep toh' to see output."
                 description: qsTrId("verbose-mode-desc")
-                onCheckedChanged: if (checked !== settings["verboseMode"]) settingsui.setSettingInt("verboseMode", checked ? 1 : 0)
+                onCheckedChanged: if (checked !== settings["verboseMode"]) settingsui.setSetting("verboseMode", checked)
                 width: parent.width - 2*Theme.paddingLarge
                 Component.onCompleted: checked = settings["verboseMode"]
             }
@@ -319,7 +331,7 @@ Page
                 //% "No deadkeys"
                 text: qsTrId("nodeadkeys-sw")
                 //: No deadkeys switch description
-                //% "Set 'nodeadkeys' to keymap variat. Required for some keyboard layouts, e.g. fi, de."
+                //% "Set 'nodeadkeys' to keymap variant. Required for some keyboard layouts, e.g. fi, de."
                 description: qsTrId("nodeadkeys-desc")
                 width: parent.width - 2*Theme.paddingLarge
                 automaticCheck: false

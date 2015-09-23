@@ -180,7 +180,7 @@ void UserDaemon::showNotification(const QString &text)
     Notification notif;
 
     notif.setPreviewBody(text);
-    notif.setHintValue("x-nemo-preview-icon", SailfishApp::pathTo("/icon-system-keyboard.png").toLocalFile());
+    notif.setCategory("x-harbour.tohkbd2");
     notif.publish();
 }
 
@@ -205,7 +205,7 @@ QString UserDaemon::getPathTo(const QString &filename)
 {
     if (filename == "keymaplocation")
     {
-        return QDir::homePath() + KEYMAP_FOLDER;
+        return QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + KEYMAP_FOLDER;
     }
 
     return SailfishApp::pathTo(filename).toLocalFile();
@@ -220,7 +220,7 @@ void UserDaemon::showUnsupportedLayoutNotification()
 
 void UserDaemon::installKeymaps(const bool &overwrite)
 {
-    QDir keymapfolder(QDir::homePath() + KEYMAP_FOLDER);
+    QDir keymapfolder(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + KEYMAP_FOLDER);
     keymapfolder.mkpath(".");
 
     QDir keymapRes(":/layouts/");

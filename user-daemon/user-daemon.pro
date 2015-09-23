@@ -14,9 +14,14 @@ translations.path = /usr/share/$${TARGET}/i18n
 translations.files = i18n/*.qm
 
 icons.path = /usr/share/$${TARGET}
-icons.files = config/icon-system-keyboard.png
+icons.files = config/icon-system-keyboard.png \
+              config/icon-lock-tohkbd2.png
 
-INSTALLS += translations icons
+notificationCategories.path = /usr/share/lipstick/notificationcategories
+notificationCategories.files = config/x-harbour.tohkbd2.conf \
+                               config/x-harbour.tohkbd2.screenshot.conf
+
+INSTALLS += translations icons notificationCategories
 
 message($${DEFINES})
 
@@ -39,8 +44,14 @@ RESOURCES += \
     config/keymaps.qrc
 
 OTHER_FILES += \
+    harbour-tohkbd2-user.desktop \
     config/icon-system-keyboard.png \
+    config/icon-lock-tohkbd2.png \
+    config/x-harbour.tohkbd2.conf \
+    config/x-harbour.tohkbd2.screenshot.conf \
     i18n/*.ts \
     qml/taskswitcher.qml \
-    config/layouts/*.tohkbdmap
+    config/layouts/*.tohkbdmap \
+    config/x-harbour.tohkbd2.conf \
+    config/x-harbour.tohkbd2.screenshot.conf
 

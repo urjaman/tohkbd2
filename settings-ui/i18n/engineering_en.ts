@@ -350,8 +350,8 @@
         <translation type="unfinished"></translation>
     </message>
     <message id="nodeadkeys-desc">
-        <source>Set &apos;nodeadkeys&apos; to keymap variat. Required for some keyboard layouts, e.g. fi, de.</source>
-        <oldsource>Set &apos;nodeadkeys&apos; to keymap variat. Required for some keyboard layouts, e.g. fi</oldsource>
+        <source>Set &apos;nodeadkeys&apos; to keymap variant. Required for some keyboard layouts, e.g. fi, de.</source>
+        <oldsource>Set &apos;nodeadkeys&apos; to keymap variat. Required for some keyboard layouts, e.g. fi, de.</oldsource>
         <extracomment>No deadkeys switch description</extracomment>
         <translation type="unfinished"></translation>
     </message>
@@ -387,13 +387,30 @@
         <translation type="unfinished"></translation>
     </message>
     <message id="turn-display-off-when-removed-sw">
-        <source>Display Off when removed</source>
-        <extracomment>Display Off when removed switch text</extracomment>
+        <source>Display off when removed</source>
+        <oldsource>Display Off when removed</oldsource>
+        <extracomment>Display off when removed switch text</extracomment>
         <translation type="unfinished"></translation>
     </message>
     <message id="turn-display-off-when-removed-desc">
-        <source>Turn display off when keyboard removed</source>
-        <extracomment>Display Off when removed switch description</extracomment>
+        <source>Turn display off when keyboard is removed</source>
+        <oldsource>Turn display off when keyboard removed</oldsource>
+        <extracomment>Display off when removed switch description</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message id="keep-display-on-when-connected-sw">
+        <source>Display on when connected</source>
+        <extracomment>Keep display on when connected switch text</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message id="keep-display-on-when-connected-desc">
+        <source>Keep display on when keyboard is connected</source>
+        <extracomment>Keep display on when connected switch description</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message id="about-changes">
+        <source>Changes</source>
+        <extracomment>section header for changelog</extracomment>
         <translation type="unfinished"></translation>
     </message>
 </context>

@@ -62,18 +62,17 @@ public slots:
     void backlightTimerTimeout();
     void presenceTimerTimeout();
     void repeatTimerTimeout();
+    void displayBlankPreventTimerTimeout(bool forceCancel = false);
 
     /* Interrupt */
     void handleGpioInterrupt();
 
     /* DBUS methods */
-    Q_NOREPLY void fakeInputReport(const QByteArray &data);
     QString getVersion();
     Q_NOREPLY void quit();
     Q_NOREPLY void setShortcut(const QString &key, const QString &appPath);
     Q_NOREPLY void setShortcutsToDefault();
-    Q_NOREPLY void setSettingInt(const QString &key, const int &value);
-    Q_NOREPLY void setSettingString(const QString &key, const QString &value);
+    Q_NOREPLY void setSetting(const QString &key, const QDBusVariant &value);
     Q_NOREPLY void forceKeymapReload(const QString &layout);
 
 signals:
@@ -94,13 +93,13 @@ private:
     void reloadSettings();
     void saveActiveLayout();
     void saveOrientation();
-    void keyboardConnectedNotification(bool connected);
     void checkEEPROM();
     bool tohcoreBind(bool bind);
     void controlLeds(bool restore);
     bool checkSailfishVersion(QString versionToCompare);
     void setVerboseMode(bool verbose);
     bool getCurrentDisplayState();
+    QVariantMap settingsMap;
 
     int gpio_fd;
 
@@ -112,16 +111,12 @@ private:
     tca8424driver *tca8424;
     keymapping *keymap;
 
-    int backlightLuxThreshold;
-    int keyRepeatDelay;
-    int keyRepeatRate;
-    bool forceBacklightOn;
-
     QMutex mutex;
 
     QTimer *backlightTimer;
     QTimer *presenceTimer;
     QTimer *repeatTimer;
+    QTimer *displayBlankPreventTimer;
 
     QString currentActiveLayout;
     QString currentOrientationLock;
@@ -132,20 +127,18 @@ private:
     bool keypadIsPresent;
     bool vkbLayoutIsTohkbd;
     bool dbusRegistered;
-    bool stickyCtrl;
     bool displayIsOn;
     bool vddEnabled;
     bool interruptsEnabled;
     bool keyIsPressed;
     bool keyRepeat;
-    bool backlightEnabled;
     bool slideEventEmitted;
-    bool forceLandscapeOrientation;
     bool taskSwitcherVisible;
     bool selfieLedOn;
     bool capsLock;
     bool verboseMode;
-    bool turnDisplayOffWhenRemoved;
+    bool displayBlankPreventRequested;
+    bool doNotChangeVkbLayout;
 
     ComKimmoliTohkbd2userInterface *tohkbd2user;
     ComKimmoliTohkbd2settingsuiInterface *tohkbd2settingsui;
