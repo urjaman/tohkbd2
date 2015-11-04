@@ -177,6 +177,7 @@ bool Tohkbd::init()
     connect(keymap, SIGNAL(bogusDetected()), tca8424, SLOT(reset()));
     connect(keymap, SIGNAL(setKeymapLayout(QString)), tohkbd2user, SLOT(setKeymapLayout(QString)));
     connect(keymap, SIGNAL(setKeymapVariant(QString)), tohkbd2user, SLOT(setKeymapVariant(QString)));
+    connect(keymap, SIGNAL(keymapInvalid()), tohkbd2user, SLOT(showUnsupportedLayoutNotification()));
 
     QString currentPhysicalLayout = tohkbd2user->getActivePhysicalLayout();
 
@@ -420,7 +421,8 @@ bool Tohkbd::checkKeypadPresence()
 
     if (__prev_keypadPresence != keypadIsPresent)
     {
-        tohkbd2user->showKeyboardConnectionNotification(keypadIsPresent);
+        if (settingsMap.value("showNotifications").toBool())
+            tohkbd2user->showKeyboardConnectionNotification(keypadIsPresent);
 
         emit keyboardConnectedChanged(keypadIsPresent);
         emitKeypadSlideEvent(keypadIsPresent);
@@ -1168,6 +1170,7 @@ void Tohkbd::reloadSettings()
     settingsMap.insert("forceBacklightOn", settings.value("forceBacklightOn", FORCE_BACKLIGHT_ON).toBool());
     settingsMap.insert("turnDisplayOffWhenRemoved", settings.value("turnDisplayOffWhenRemoved", TURN_DISPLAY_OFF_WHEN_REMOVED).toBool());
     settingsMap.insert("keepDisplayOnWhenConnected", settings.value("keepDisplayOnWhenConnected", KEEP_DISPLAY_ON_WHEN_CONNECTED).toBool());
+    settingsMap.insert("showNotifications", settings.value("showNotifications", SHOW_NOTIFICATIONS).toBool());
     settings.endGroup();
 }
 

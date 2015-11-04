@@ -1,5 +1,8 @@
 #include <stdio.h>
 #include <sailfishapp.h>
+#include <QHostAddress>
+#include <QtSystemInfo/QDeviceInfo>
+
 #include "userdaemon.h"
 
 static const char *SERVICE = SERVICE_NAME;
@@ -15,6 +18,24 @@ UserDaemon::UserDaemon(QObject *parent) :
 
     physicalLayout = new MGConfItem("/desktop/lipstick-jolla-home/layout");
     connect(physicalLayout, SIGNAL(valueChanged()), this, SLOT(handlePhysicalLayout()));
+
+    unsupportedLayoutNotificationBlocker = new QTimer(this);
+    unsupportedLayoutNotificationBlocker->setSingleShot(true);
+    unsupportedLayoutNotificationBlocker->setInterval(15000);
+
+    /* Remove tohkbd from enabled layouts if vkb is hidden by maliit.
+     * The related PR is merged in maliit-framework and should be in 2.0 */
+    if (checkSailfishVersion("2.0.0.0"))
+    {
+        QString tohlayout("harbour-tohkbd2.qml");
+        MGConfItem el("/sailfish/text_input/enabled_layouts");
+        QStringList list = el.value().toStringList();
+        if (list.contains(tohlayout))
+        {
+            list.removeAll(tohlayout);
+            el.set(list);
+        }
+    }
 }
 
 UserDaemon::~UserDaemon()
@@ -213,9 +234,15 @@ QString UserDaemon::getPathTo(const QString &filename)
 
 void UserDaemon::showUnsupportedLayoutNotification()
 {
+    /* Do not spam with notifications */
+    if (unsupportedLayoutNotificationBlocker->isActive())
+        return;
+
     //: Notification shown when a physical layout is not supported or the config file has an error. Notification text will scroll.
     //% "The selected physical layout is not supported by TOHKBD2. Config file can also be invalid or missing."
     showNotification(qtTrId("layout-unsupported"));
+
+    unsupportedLayoutNotificationBlocker->start();
 }
 
 void UserDaemon::installKeymaps(const bool &overwrite)
@@ -268,4 +295,16 @@ void UserDaemon::setKeymapVariant(const QString &value)
 {
     MGConfItem keymapVariant("/desktop/lipstick-jolla-home/variant");
     keymapVariant.set(value);
+}
+
+/*
+ * Check that Sailfish version is at least required version
+ */
+bool UserDaemon::checkSailfishVersion(QString versionToCompare)
+{
+    QDeviceInfo deviceInfo;
+    QString sailfishVersion = deviceInfo.version(QDeviceInfo::Os);
+
+    return (QHostAddress(sailfishVersion).toIPv4Address()
+            >= QHostAddress(versionToCompare).toIPv4Address());
 }
